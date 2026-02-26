@@ -2040,6 +2040,13 @@ ${formData.name}`
 
         // INITIALIZE ON LOAD
         document.addEventListener('DOMContentLoaded', init);
+
+        // Right-click protection
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+
+        
     </script>
 </body>
+
 </html>
