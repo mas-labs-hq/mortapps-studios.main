@@ -1,18 +1,26 @@
 /**
  * AgriXen Service Worker
- * Version: 3.1.0
+ * Version: 3.6.0 - Auto-Refresh Enabled
  * 
  * HOW UPDATES WORK:
  * 1. Change CACHE_VERSION below when you update any file
  * 2. Users will automatically get the new version on next visit
  * 3. The old cache is cleaned up automatically
  * 4. PWA users will receive updates automatically
+ * 
+ * AUTO-REFRESH (in app.js):
+ * - Weather refreshes every 1 hour
+ * - PWA checks for SW updates every 1 hour
+ * - If SW version changed, app auto-reloads
+ * 
+ * ALL DATA IS IN app.js - Edit VET_CONTACTS, COMMUNITY_MESSAGES, 
+ * and FARMERS_OF_THE_WEEK arrays directly in app.js
  */
 
 // ============================================
 // CHANGE THIS VERSION WHEN YOU UPDATE THE APP
 // ============================================
-var CACHE_VERSION = '3.2.0';
+var CACHE_VERSION = '3.6.0';
 var CACHE_NAME = 'agrixen-v' + CACHE_VERSION;
 
 // Files to cache for offline use
@@ -93,7 +101,7 @@ self.addEventListener('activate', function(event) {
 });
 
 // ============================================
-// FETCH EVENT - Network first, fallback to cache
+// FETCH EVENT - Cache-first for static assets
 // ============================================
 self.addEventListener('fetch', function(event) {
     var request = event.request;
