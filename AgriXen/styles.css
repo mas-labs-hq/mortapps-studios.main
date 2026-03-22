@@ -1482,6 +1482,73 @@ body::before {
 }
 
 /* ============================================
+   VET REGISTER BUTTON
+   ============================================ */
+.vet-register-section {
+    margin: 1rem 0;
+    display: flex;
+    justify-content: center;
+}
+
+.vet-register-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    touch-action: manipulation;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+}
+
+.vet-register-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.vet-register-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+/* Certification Notice */
+.certification-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 0.875rem;
+    margin: 1rem 0;
+}
+
+.certification-notice svg {
+    width: 24px;
+    height: 24px;
+    color: var(--warning);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.certification-notice span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.certification-notice strong {
+    color: var(--text);
+}
+
+/* ============================================
    MARKET ACTION CARDS
    ============================================ */
 .market-action-cards {
@@ -2237,7 +2304,7 @@ body::before {
 }
 
 /* ============================================
-   MODAL - OPTIMIZED
+   MODAL - OPTIMIZED & SMOOTH
    ============================================ */
 .modal {
     position: fixed;
@@ -2250,7 +2317,9 @@ body::before {
     padding: 1rem;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
+    transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }
 
 .modal:not(.hidden) {
@@ -2267,13 +2336,14 @@ body::before {
     max-height: 90dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    transform: translateY(16px);
+    transform: translateY(12px) scale(0.98);
     opacity: 0;
-    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+    transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+    will-change: transform, opacity;
 }
 
 .modal:not(.hidden) .modal-content {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
 }
 
@@ -2482,8 +2552,11 @@ body::before {
     font-size: 0.7rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    transition: background-color 0.1s, border-color 0.1s, color 0.1s;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .footer-btn svg {
@@ -2495,10 +2568,11 @@ body::before {
     background: var(--primary);
     border-color: var(--primary);
     color: white;
+    transform: scale(0.98);
 }
 
 /* ============================================
-   TOAST
+   TOAST - SMOOTH & FAST
    ============================================ */
 .toast {
     position: fixed;
@@ -2512,14 +2586,17 @@ body::before {
     font-size: 0.8rem;
     z-index: 1000;
     opacity: 0;
-    animation: toastIn 0.25s ease-out forwards;
+    animation: toastIn 0.15s ease-out forwards;
     pointer-events: none;
+    will-change: opacity, transform;
+    max-width: 90%;
+    text-align: center;
 }
 
 @keyframes toastIn {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(16px);
+        transform: translateX(-50%) translateY(10px);
     }
     to {
         opacity: 1;
@@ -2528,7 +2605,7 @@ body::before {
 }
 
 .toast.fade-out {
-    animation: toastOut 0.2s ease-out forwards;
+    animation: toastOut 0.15s ease-out forwards;
 }
 
 @keyframes toastOut {
