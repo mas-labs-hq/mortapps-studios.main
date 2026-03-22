@@ -2615,6 +2615,7 @@ body::before {
 
 /* ============================================
    FARMERS OF THE WEEK SECTION
+   MOBILE FIRST DESIGN
    ============================================ */
 .farmers-week-container {
     margin-top: 1.5rem;
@@ -2631,7 +2632,7 @@ body::before {
 
 .farmers-week-header {
     background: var(--primary-gradient);
-    padding: 1rem 1.25rem;
+    padding: 0.875rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2641,7 +2642,7 @@ body::before {
 
 .farmers-week-header h3 {
     color: white;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     margin: 0;
 }
@@ -2649,34 +2650,30 @@ body::before {
 .farmers-week-badge {
     background: rgba(255, 255, 255, 0.2);
     color: white;
-    padding: 0.3rem 0.8rem;
+    padding: 0.25rem 0.6rem;
     border-radius: 20px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 600;
 }
 
-/* Farmers Grid */
+/* Farmers Grid - MOBILE FIRST: Single column */
 .farmers-week-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
 }
 
-@media (max-width: 600px) {
-    .farmers-week-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-}
-
-/* Farmer Card */
+/* Farmer Card - MOBILE OPTIMIZED */
 .farmer-card {
     background: var(--bg-tertiary);
     border-radius: var(--radius);
-    padding: 1rem;
+    padding: 0;
     position: relative;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -2685,21 +2682,22 @@ body::before {
     box-shadow: var(--shadow-lg);
 }
 
-/* Rank Badge */
+/* Rank Badge - MOBILE OPTIMIZED */
 .farmer-rank {
     position: absolute;
-    top: -8px;
-    left: -8px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    top: 6px;
+    left: 6px;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: 800;
     color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     z-index: 2;
 }
 
@@ -2715,66 +2713,81 @@ body::before {
     background: linear-gradient(135deg, #CD7F32, #B87333);
 }
 
-/* Farmer Profile */
+/* Farmer Profile Section - LEFT SIDE */
 .farmer-profile {
-    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    min-width: 90px;
+    background: var(--bg-secondary);
+    flex-shrink: 0;
 }
 
 .farmer-avatar {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--primary);
-    margin-bottom: 0.5rem;
+    border: 2px solid var(--primary);
+    margin-bottom: 0.4rem;
 }
 
 .farmer-avatar.placeholder-avatar {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border: 2px dashed var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 0.5rem;
 }
 
 .farmer-avatar.placeholder-avatar svg {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     color: var(--text-muted);
 }
 
 .farmer-name {
     display: block;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: var(--text);
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.2;
+    max-width: 80px;
 }
 
-/* Farmer Harvest Images */
+/* Farmer Harvest Images - RIGHT SIDE */
 .farmer-harvests {
     display: flex;
     gap: 0.5rem;
-    justify-content: center;
+    padding: 0.75rem;
+    padding-left: 0;
+    flex: 1;
+    align-items: center;
 }
 
 .farmer-harvest-img {
-    width: calc(50% - 0.25rem);
-    height: 70px;
+    width: 100%;
+    height: 80px;
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid var(--border);
+    flex: 1;
 }
 
 .farmer-harvest-placeholder {
-    width: calc(50% - 0.25rem);
-    height: 70px;
+    width: 100%;
+    height: 80px;
     background: var(--bg-secondary);
     border: 1px dashed var(--border);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 1;
 }
 
 .farmer-harvest-placeholder svg {
@@ -2786,12 +2799,13 @@ body::before {
 /* Farmers Week Note */
 .farmers-week-note {
     text-align: center;
-    padding: 0.75rem 1rem;
-    font-size: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
     background: var(--bg-tertiary);
     margin: 0;
     border-top: 1px solid var(--border);
+    line-height: 1.4;
 }
 
 /* Placeholder State */
@@ -2805,7 +2819,7 @@ body::before {
 
 .farmers-week-placeholder .farmers-week-header.faded {
     background: var(--bg-tertiary);
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 .farmers-week-placeholder .farmers-week-header.faded h3 {
@@ -2816,28 +2830,28 @@ body::before {
     opacity: 0.5;
 }
 
-/* Diagonal Tag */
+/* Diagonal Tag / Message */
 .farmers-week-tag {
     position: relative;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.15));
-    padding: 1.5rem 1rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.12));
+    padding: 1rem 0.75rem;
     text-align: center;
     border-bottom: 1px solid var(--border);
 }
 
 .farmers-week-tag span {
-    display: inline-block;
+    display: block;
     background: var(--primary-gradient);
     color: white;
-    padding: 0.5rem 1.5rem;
-    border-radius: 4px;
-    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.4;
-    max-width: 90%;
+    line-height: 1.5;
+    max-width: 100%;
 }
 
-/* Send Button - Thursday Only */
+/* Send Button - Thursday Only - MOBILE OPTIMIZED */
 .farmers-send-btn {
     display: flex;
     align-items: center;
@@ -2845,13 +2859,14 @@ body::before {
     gap: 0.5rem;
     background: linear-gradient(135deg, #25D366, #128C7E);
     color: white;
-    padding: 0.875rem 1.5rem;
+    padding: 0.75rem 1.25rem;
     border-radius: var(--radius);
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
-    margin: 1rem auto;
-    max-width: 280px;
+    font-size: 0.85rem;
+    margin: 0.75rem auto;
+    max-width: 100%;
+    width: calc(100% - 1.5rem);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
 }
@@ -2866,8 +2881,9 @@ body::before {
 }
 
 .farmers-send-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 /* Dark Mode Adjustments */
@@ -2881,6 +2897,53 @@ body.dark-mode .farmer-harvest-placeholder {
 
 body.dark-mode .farmers-week-placeholder {
     border-color: var(--border);
+}
+
+/* TABLET AND DESKTOP - Only switch to grid on larger screens */
+@media (min-width: 500px) {
+    .farmers-week-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .farmer-card {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    
+    .farmer-profile {
+        min-width: auto;
+        background: transparent;
+        padding: 0;
+    }
+    
+    .farmer-avatar {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .farmer-name {
+        font-size: 0.85rem;
+        max-width: none;
+    }
+    
+    .farmer-harvests {
+        padding: 0.75rem 0 0 0;
+        flex: none;
+        width: 100%;
+    }
+    
+    .farmer-harvest-img,
+    .farmer-harvest-placeholder {
+        height: 70px;
+    }
+    
+    .farmers-send-btn {
+        width: auto;
+        max-width: 280px;
+    }
 }
 
 /* ============================================
