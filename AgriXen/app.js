@@ -64,34 +64,42 @@ var COMMUNITY_MESSAGES = [
 // 3. Farmers display from Friday 12:00 PM to Monday 12:00 PM
 // 4. Section shows placeholder message when farmers are not displayed
 // 5. Only 3 farmers will be shown - rank 1, 2, and 3
+// 6. NEW: Add harvest names to display on harvest images
 // =====================================================
 var FARMERS_OF_THE_WEEK = [
     // ========== EXAMPLE FARMERS - REPLACE WITH YOUR OWN ==========
-    // Format: { name: "Farmer Name", profilePic: "farmers-pic/filename.jpg", harvest1: "harvest-pic/image1.jpg", harvest2: "harvest-pic/image2.jpg" }
+    // Format: { name: "Farmer Name", profilePic: "farmers-pic/filename.jpg", harvest1: "harvest-pic/image1.jpg", harvest1Name: "Produce Name", harvest2: "harvest-pic/image2.jpg", harvest2Name: "Produce Name" }
     // Rank 1 - Best Farmer
     { 
-        name: "Jane Wanagri", 
+        name: "Jane Wangari", 
         profilePic: "farmers-pic/jane.wangari.jpg", 
-        harvest1: "harvest-pic/jane-spinach.jpg", 
-        harvest2: "harvest-pic/jane-beans.jpg" 
+        harvest1: "harvest-pic/jane-spinach.jpg",
+        harvest1Name: "spinach",
+        harvest2: "harvest-pic/jane-beans.jpg",
+        harvest2Name: "Beans"
     },
     // Rank 2 - Second Best
     { 
         name: "Mary Wanjiku", 
         profilePic: "https://images.pexels.com/photos/27205295/pexels-photo-27205295.jpeg", 
-        harvest1: "https://images.pexels.com/photos/6136356/pexels-photo-6136356.jpeg", 
-        harvest2: "https://images.pexels.com/photos/6870859/pexels-photo-6870859.jpeg" 
+        harvest1: "https://images.pexels.com/photos/6136356/pexels-photo-6136356.jpeg",
+        harvest1Name: "Tea",
+        harvest2: "https://images.pexels.com/photos/6870859/pexels-photo-6870859.jpeg",
+        harvest2Name: "Tea"
     },
     // Rank 3 - Third Best
     { 
         name: "Peter Ochieng", 
         profilePic: "https://images.pexels.com/photos/11053957/pexels-photo-11053957.jpeg", 
-        harvest1: "https://images.pexels.com/photos/17164919/pexels-photo-17164919.jpeg", 
-        harvest2: "https://images.pexels.com/photos/5601957/pexels-photo-5601957.jpeg" 
+        harvest1: "https://images.pexels.com/photos/17164919/pexels-photo-17164919.jpeg",
+        harvest1Name: "Sorghum",
+        harvest2: "https://images.pexels.com/photos/4430323/pexels-photo-4430323.jpeg",
+        harvest2Name: "Goat Hearding"
     }
     // ============================================================
     // TO UPDATE: Simply replace the names and image paths above
     // Make sure images exist in the correct folders
+    // Add harvest1Name and harvest2Name for each harvest image
     // ============================================================
 ];
 
@@ -286,6 +294,7 @@ function init() {
     renderCommunityMessages();
     renderFarmersOfWeek();
     initAds();
+    initImageOptimization();
     checkNotificationPermission();
     initPWAInstall();
     
@@ -322,8 +331,12 @@ if (document.readyState === 'loading') {
 }
 
 // =====================================================
-// PWA INSTALL HANDLING
+// PWA INSTALL HANDLING - AGGRESSIVE PROMPT
+// Shows prompt EVERY visit for non-installers + random times
 // =====================================================
+
+var installPromptTimer = null;
+var randomPromptInterval = null;
 
 function initPWAInstall() {
     // Listen for the install prompt event
@@ -342,8 +355,58 @@ function initPWAInstall() {
         deferredInstallPrompt = null;
         localStorage.setItem('agrixen_installed', 'true');
         localStorage.removeItem('agrixen_pwa_installable');
+        clearInstallTimers();
         toast('AgriXen installed successfully!');
     });
+    
+    // Start aggressive install prompts for non-installers
+    initAggressiveInstallPrompts();
+}
+
+// Clear all install timers
+function clearInstallTimers() {
+    if (installPromptTimer) {
+        clearTimeout(installPromptTimer);
+        installPromptTimer = null;
+    }
+    if (randomPromptInterval) {
+        clearInterval(randomPromptInterval);
+        randomPromptInterval = null;
+    }
+}
+
+// Aggressive install prompts - show on every visit + random times
+function initAggressiveInstallPrompts() {
+    var installed = localStorage.getItem('agrixen_installed');
+    
+    // If already installed, don't bother
+    if (installed) {
+        return;
+    }
+    
+    // Show install prompt after 5 seconds on every visit
+    installPromptTimer = setTimeout(function() {
+        if (!localStorage.getItem('agrixen_installed') && deferredInstallPrompt) {
+            showInstallModal();
+        }
+    }, 5000);
+    
+    // Random prompts every 2-4 minutes while app is open
+    randomPromptInterval = setInterval(function() {
+        // Random delay between 2-4 minutes (120000-240000ms)
+        var randomDelay = Math.floor(Math.random() * 120000) + 120000;
+        
+        setTimeout(function() {
+            // Only show if not installed and modal not already visible
+            var installModal = document.getElementById('installModal');
+            if (!localStorage.getItem('agrixen_installed') && 
+                deferredInstallPrompt && 
+                installModal && 
+                installModal.classList.contains('hidden')) {
+                showInstallModal();
+            }
+        }, randomDelay);
+    }, 180000); // Check every 3 minutes
 }
 
 function showInstallPrompt() {
@@ -412,34 +475,72 @@ function shouldShowInstallPrompt() {
 }
 
 // =====================================================
-// NOTIFICATION SYSTEM - Cross-Browser Compatible
+// NOTIFICATION SYSTEM - AGGRESSIVE PROMPT
+// Shows prompt EVERY visit for non-enablers + random times
 // =====================================================
+
+var notificationPromptTimer = null;
+var randomNotificationInterval = null;
 
 function checkNotificationPermission() {
     // Check if browser supports notifications
     if (!('Notification' in window)) {
         console.log('This browser does not support notifications');
-        // Don't show notification modal for unsupported browsers
         // Proceed to show location modal directly
         checkLocationPrompt();
         return;
     }
     
-    // Check if we already asked
-    var asked = localStorage.getItem('agrixen_notification_asked');
-    
-    // Only show notification modal if:
-    // 1. Permission is still 'default' (not yet asked)
-    // 2. We haven't shown our custom modal before
-    if (Notification.permission === 'default' && !asked) {
-        // Show notification modal after app loads
-        setTimeout(function() {
-            document.getElementById('notificationModal').classList.remove('hidden');
-        }, 3000);
-    } else {
-        // Already asked or permission granted/denied, proceed to location check
-        checkLocationPrompt();
+    // Start aggressive notification prompts
+    initAggressiveNotificationPrompts();
+}
+
+// Clear all notification timers
+function clearNotificationTimers() {
+    if (notificationPromptTimer) {
+        clearTimeout(notificationPromptTimer);
+        notificationPromptTimer = null;
     }
+    if (randomNotificationInterval) {
+        clearInterval(randomNotificationInterval);
+        randomNotificationInterval = null;
+    }
+}
+
+// Aggressive notification prompts - show on every visit + random times
+function initAggressiveNotificationPrompts() {
+    // If permission already granted or denied, don't show prompts
+    if (Notification.permission === 'granted') {
+        clearNotificationTimers();
+        checkLocationPrompt();
+        return;
+    }
+    
+    // Show notification modal after 3 seconds on every visit
+    notificationPromptTimer = setTimeout(function() {
+        if (Notification.permission === 'default') {
+            document.getElementById('notificationModal').classList.remove('hidden');
+        }
+    }, 3000);
+    
+    // Random prompts every 3-5 minutes while app is open
+    randomNotificationInterval = setInterval(function() {
+        var notificationModal = document.getElementById('notificationModal');
+        
+        // Only show if permission still 'default' and modal not visible
+        if (Notification.permission === 'default' && 
+            notificationModal && 
+            notificationModal.classList.contains('hidden')) {
+            // Random delay between 30 seconds - 2 minutes
+            var randomDelay = Math.floor(Math.random() * 90000) + 30000;
+            
+            setTimeout(function() {
+                if (Notification.permission === 'default') {
+                    document.getElementById('notificationModal').classList.remove('hidden');
+                }
+            }, randomDelay);
+        }
+    }, 180000); // Check every 3 minutes
 }
 
 function checkLocationPrompt() {
@@ -455,8 +556,6 @@ function checkLocationPrompt() {
 function requestNotificationPermission() {
     var modal = document.getElementById('notificationModal');
     
-    // Mark as asked regardless of outcome
-    localStorage.setItem('agrixen_notification_asked', 'true');
     modal.classList.add('hidden');
     
     // Check browser support again
@@ -498,12 +597,17 @@ function requestNotificationPermission() {
 function handleNotificationResult(permission) {
     if (permission === 'granted') {
         toast('Notifications enabled! You will receive farming updates.');
+        clearNotificationTimers();
         // Send welcome notification
         setTimeout(function() {
             sendNotification('Welcome to AgriXen!', 'You will now receive weather alerts and farming tips.');
         }, 1000);
+        
+        // Schedule recurring notifications
+        scheduleRecurringNotifications();
     } else if (permission === 'denied') {
         toast('Notifications blocked. Enable them in browser settings if needed.');
+        clearNotificationTimers();
     } else {
         toast('Notifications skipped. You can enable them anytime.');
     }
@@ -513,10 +617,69 @@ function handleNotificationResult(permission) {
 }
 
 function skipNotificationSetup() {
-    localStorage.setItem('agrixen_notification_asked', 'true');
     document.getElementById('notificationModal').classList.add('hidden');
     // Proceed to location prompt
     checkLocationPrompt();
+}
+
+// =====================================================
+// SCHEDULED NOTIFICATIONS - FRIDAY FARMER UPDATE & THURSDAY REMINDER
+// =====================================================
+
+var scheduledNotificationInterval = null;
+
+function scheduleRecurringNotifications() {
+    // Check every minute for scheduled notifications
+    scheduledNotificationInterval = setInterval(checkScheduledNotifications, 60000);
+    
+    // Also check immediately
+    checkScheduledNotifications();
+}
+
+function checkScheduledNotifications() {
+    if (Notification.permission !== 'granted') return;
+    
+    var now = new Date();
+    var day = now.getDay(); // 0 = Sunday, 4 = Thursday, 5 = Friday
+    var hours = now.getHours();
+    var minutes = now.getMinutes();
+    
+    // Get last notification time
+    var lastNotification = localStorage.getItem('agrixen_last_scheduled_notification');
+    var today = now.toDateString();
+    
+    // Friday 12:00 PM - Farmers of the Week Update
+    if (day === 5 && hours === 12 && minutes >= 0 && minutes < 5) {
+        if (lastNotification !== today + '_friday') {
+            sendNotification(
+                '🏆 Farmers of the Week Updated!',
+                'Check out this week\'s top 3 farmers and their amazing harvests!'
+            );
+            localStorage.setItem('agrixen_last_scheduled_notification', today + '_friday');
+        }
+    }
+    
+    // Thursday 8:00 AM - Submission Reminder
+    if (day === 4 && hours === 8 && minutes >= 0 && minutes < 5) {
+        if (lastNotification !== today + '_thursday') {
+            sendNotification(
+                '🌾 Farmers of the Week - Submit Today!',
+                'Today is Thursday! Send your best harvest photos via WhatsApp to be featured!'
+            );
+            localStorage.setItem('agrixen_last_scheduled_notification', today + '_thursday');
+        }
+    }
+    
+    // Thursday 4:00 PM - Final Reminder
+    if (day === 4 && hours === 16 && minutes >= 0 && minutes < 5) {
+        if (lastNotification !== today + '_thursday_final') {
+            sendNotification(
+                '⏰ Last Chance to Submit!',
+                'Tomorrow is Friday! Submit your harvest photos now to be featured this week!'
+            );
+            localStorage.setItem('agrixen_last_scheduled_notification', today + '_thursday_final');
+        }
+    }
 }
 
 function sendNotification(title, body) {
@@ -1394,6 +1557,49 @@ function generateLocalResponse(message, topic) {
         return html;
     }
     
+    // ----- FARMER OF THE WEEK -----
+    if (lowerMsg.match(/(farmer of the week|farmers of the week|featured farmer|harvest competition|submit harvest|thursday)/)) {
+        var today = new Date().getDay();
+        var isThursday = today === 4;
+        
+        html = '<p><strong>🏆 Farmers of the Week</strong></p>';
+        html += '<p>Every week, we showcase the top 3 farmers with the best harvests!</p>';
+        html += '<p><strong>Timeline:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Thursday</strong> - Submit your harvest photos via WhatsApp</li>';
+        html += '<li><strong>Friday 12:00 PM</strong> - New winners announced!</li>';
+        html += '<li><strong>Friday to Monday</strong> - Farmers displayed in the app</li>';
+        html += '</ul>';
+        
+        if (isThursday) {
+            html += '<p>🗓️ <strong>Today is Thursday!</strong> This is your chance to submit your best harvest!</p>';
+            html += '<p>Scroll down to the Farmers of the Week section and tap the WhatsApp button to send your photos!</p>';
+        } else {
+            html += '<p>Get your best harvest photos ready for Thursday!</p>';
+        }
+        
+        html += '<p><strong>How to participate:</strong></p>';
+        html += '<ul>';
+        html += '<li>Must be a member of the AgriXen community</li>';
+        html += '<li>Send 2 clear photos of your harvest/produce</li>';
+        html += '<li>Include your name and county</li>';
+        html += '</ul>';
+        return html;
+    }
+    
+    // ----- SUBMIT / PARTICIPATE -----
+    if (lowerMsg.match(/(submit|participate|competition|win|featured)/)) {
+        html = '<p><strong>How to Get Featured</strong></p>';
+        html += '<p>Want to be one of our Farmers of the Week?</p>';
+        html += '<ul>';
+        html += '<li>Join the AgriXen community (Market tab)</li>';
+        html += '<li>On Thursday, submit your best harvest photos via WhatsApp</li>';
+        html += '<li>Include your name, county, and what you farm</li>';
+        html += '</ul>';
+        html += '<p>Winners are announced every Friday at 12:00 PM!</p>';
+        return html;
+    }
+    
     // ----- ADD MORE RESPONSE PATTERNS BELOW THIS LINE -----
     // Example format:
     // if (lowerMsg.match(/(your keywords here)/)) {
@@ -1545,6 +1751,7 @@ function getFarmersWhatsAppLink() {
 
 /**
  * Render Farmers of the Week section
+ * Displays harvest names on harvest images
  */
 function renderFarmersOfWeek() {
     var container = document.getElementById('farmersOfWeekContainer');
@@ -1570,6 +1777,10 @@ function renderFarmersOfWeek() {
             var rankClass = rank === 1 ? 'gold' : (rank === 2 ? 'silver' : 'bronze');
             var rankLabel = rank === 1 ? '🥇 1st' : (rank === 2 ? '🥈 2nd' : '🥉 3rd');
             
+            // Get harvest names or use defaults
+            var harvest1Name = farmer.harvest1Name || 'Harvest';
+            var harvest2Name = farmer.harvest2Name || 'Harvest';
+            
             html += '<div class="farmer-card">';
             
             // Rank badge
@@ -1577,14 +1788,20 @@ function renderFarmersOfWeek() {
             
             // Profile row - pic and name side by side
             html += '<div class="farmer-profile">';
-            html += '<img src="' + farmer.profilePic + '" alt="' + farmer.name + '" class="farmer-avatar" onerror="this.src=\'icons/favicon-32x32.png\'">';
+            html += '<img src="' + farmer.profilePic + '" alt="' + farmer.name + '" class="farmer-avatar protected-image" loading="lazy" onerror="this.src=\'icons/favicon-32x32.png\'">';
             html += '<span class="farmer-name">' + farmer.name + '</span>';
             html += '</div>';
             
-            // Harvest images - two side by side
+            // Harvest images - two side by side with produce names
             html += '<div class="farmer-harvests">';
-            html += '<img src="' + farmer.harvest1 + '" alt="Harvest" class="farmer-harvest-img" onerror="this.style.display=\'none\'">';
-            html += '<img src="' + farmer.harvest2 + '" alt="Harvest" class="farmer-harvest-img" onerror="this.style.display=\'none\'">';
+            html += '<div class="harvest-img-container">';
+            html += '<img src="' + farmer.harvest1 + '" alt="' + harvest1Name + '" class="farmer-harvest-img protected-image" loading="lazy" onerror="this.style.display=\'none\'">';
+            html += '<span class="harvest-name-tag">' + harvest1Name + '</span>';
+            html += '</div>';
+            html += '<div class="harvest-img-container">';
+            html += '<img src="' + farmer.harvest2 + '" alt="' + harvest2Name + '" class="farmer-harvest-img protected-image" loading="lazy" onerror="this.style.display=\'none\'">';
+            html += '<span class="harvest-name-tag">' + harvest2Name + '</span>';
+            html += '</div>';
             html += '</div>';
             
             html += '</div>';
@@ -1601,10 +1818,16 @@ function renderFarmersOfWeek() {
         html += '<h3>🏆 Farmers of the Week</h3>';
         html += '</div>';
         
-        // Message banner
-        html += '<div class="farmers-week-tag">';
-        html += '<span>🌟 Send your best harvest on Thursday to win one of 3 spots & showcase your hard work to thousands! 🌟</span>';
-        html += '</div>';
+        // Message banner - show Thursday message on Thursday
+        if (showSendButton) {
+            html += '<div class="farmers-week-tag thursday-active">';
+            html += '<span>🌟 TODAY IS THURSDAY! Send your best harvest now to win one of 3 spots! 🌟</span>';
+            html += '</div>';
+        } else {
+            html += '<div class="farmers-week-tag">';
+            html += '<span>🌟 Send your best harvest on Thursday to win one of 3 spots & showcase your hard work to thousands! 🌟</span>';
+            html += '</div>';
+        }
         
         // Placeholder cards
         html += '<div class="farmers-week-grid faded">';
@@ -1629,7 +1852,7 @@ function renderFarmersOfWeek() {
         
         // Send button - Thursday only
         if (showSendButton) {
-            html += '<a href="' + getFarmersWhatsAppLink() + '" target="_blank" class="farmers-send-btn">';
+            html += '<a href="' + getFarmersWhatsAppLink() + '" target="_blank" class="farmers-send-btn thursday-btn">';
             html += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
             html += 'Send Your Harvest via WhatsApp';
             html += '</a>';
@@ -1639,6 +1862,9 @@ function renderFarmersOfWeek() {
     }
     
     container.innerHTML = html;
+    
+    // Apply image protection to all protected images
+    applyImageProtection();
 }
 
 // =====================================================
@@ -1851,4 +2077,97 @@ function toast(msg) {
         t.classList.add('fade-out');
         setTimeout(function() { t.remove(); }, 300);
     }, 2500);
+}
+
+// =====================================================
+// IMAGE PROTECTION - BLOCK RIGHT-CLICK, LONG PRESS, DOWNLOAD
+// Protects farmer and harvest images from being copied
+// =====================================================
+
+function applyImageProtection() {
+    // Get all protected images
+    var protectedImages = document.querySelectorAll('.protected-image');
+    
+    protectedImages.forEach(function(img) {
+        // Block right-click context menu
+        img.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toast('Image protected');
+            return false;
+        });
+        
+        // Block long press (touch devices)
+        img.addEventListener('touchstart', function(e) {
+            // Set a timer for long press detection
+            this.longPressTimer = setTimeout(function() {
+                e.preventDefault();
+                toast('Image protected');
+            }, 500);
+        }, { passive: false });
+        
+        img.addEventListener('touchend', function(e) {
+            // Clear the timer when touch ends
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+            }
+        }, { passive: false });
+        
+        img.addEventListener('touchmove', function(e) {
+            // Clear timer if user moves finger
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+            }
+        }, { passive: false });
+        
+        // Block drag
+        img.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // Block select
+        img.setAttribute('draggable', 'false');
+        img.style.userSelect = 'none';
+        img.style.webkitUserSelect = 'none';
+        img.style.MozUserSelect = 'none';
+        img.style.msUserSelect = 'none';
+        img.style.webkitTouchCallout = 'none';
+    });
+    
+    // Also protect the harvest containers
+    var harvestContainers = document.querySelectorAll('.harvest-img-container');
+    harvestContainers.forEach(function(container) {
+        container.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            toast('Image protected');
+            return false;
+        });
+    });
+}
+
+// =====================================================
+// IMAGE OPTIMIZATION - LAZY LOADING & PERFORMANCE
+// =====================================================
+
+function initImageOptimization() {
+    // Preload critical images
+    var criticalImages = [
+        'icons/android-chrome-192x192.png',
+        'icons/favicon-32x32.png'
+    ];
+    
+    criticalImages.forEach(function(src) {
+        var img = new Image();
+        img.src = src;
+    });
+    
+    // Apply native lazy loading to all images
+    var allImages = document.querySelectorAll('img:not([loading])');
+    allImages.forEach(function(img) {
+        img.setAttribute('loading', 'lazy');
+    });
+    
+    // Apply image protection to any existing protected images
+    applyImageProtection();
 }
