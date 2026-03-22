@@ -71,7 +71,7 @@ var FARMERS_OF_THE_WEEK = [
     // Rank 1 - Best Farmer
     { 
         name: "Jane Wangari", 
-        profilePic: "/farmers-pic/jane.wangari.jpg", 
+        profilePic: "farmers-pic/jane.wangari.jpg", 
         harvest1: "harvest-pic/jane-spinach.jpg", 
         harvest2: "harvest-pic/jane-beans.jpg" 
     },
