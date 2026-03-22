@@ -12,7 +12,9 @@
 // Duration options: '5s' (5 sec), '10s' (10 sec), '1m' (1 min), '2m' (2 min)
 var SLOT_ADS = [
     { image: 'ad-images/lmh-ad-slot.png', url: 'https://www.linkagemediahub.co.ke', alt: 'Linkage Media Hub', duration: '5s' },
-    { image: 'ad-images/manji-ad-slot.png', url: 'https://manji.co.ke', alt: 'Manji Biscuits', duration: '10s' }
+    { image: 'ad-images/manji-ad-slot.png', url: 'https://manji.co.ke', alt: 'Manji Biscuits', duration: '10s' },
+    { image: 'ad-images/mas-ad-slot.png', url: 'https://www.mortappsstudios.com', alt: 'MortApps Studios', duration: '10s' },
+    { image: 'ad-images/kart-ad-slot.png', url: 'https://www.kartasi.net', alt: 'Kartasi', duration: '5s' }
 ];
 
 // Ad rotation state - independent for each slot with no-repeat logic
@@ -170,7 +172,7 @@ var COUNTY_CROP_FIT = {
     'Kiambu': ['Coffee', 'Tea', 'Dairy', 'Horticulture', 'Flowers', 'Bananas', 'Avocado', 'Maize', 'Tomatoes'],
     'Meru': ['Coffee', 'Tea', 'Miraa', 'Bananas', 'Maize', 'Beans', 'Potatoes', 'Dairy', 'Avocado'],
     'Tharaka-Nithi': ['Miraa', 'Coffee', 'Mangoes', 'Maize', 'Sorghum', 'Millet', 'Cowpeas'],
-    'Emb': ['Coffee', 'Tea', 'Cotton', 'Macadamia', 'Bananas', 'Maize', 'Beans'],
+    'Embu': ['Coffee', 'Tea', 'Cotton', 'Macadamia', 'Bananas', 'Maize', 'Beans'],
     
     // Rift Valley
     'Nakuru': ['Maize', 'Wheat', 'Barley', 'Potatoes', 'Dairy', 'Flowers', 'Vegetables', 'Pyrethrum', 'Tomatoes'],
@@ -297,8 +299,94 @@ function init() {
     initImageOptimization();
     checkNotificationPermission();
     initPWAInstall();
+    initVetRegisterForm();
+    initAutoRefresh(); // Auto-refresh weather and check for PWA updates
     
     setTimeout(hideLoadingScreen, 1500);
+}
+
+// =====================================================
+// AUTO-REFRESH - WEATHER & PWA UPDATES EVERY 1 HOUR
+// =====================================================
+// HOW IT WORKS:
+// 1. WEATHER: Refreshes every 1 hour automatically
+// 2. PWA UPDATE: Checks for new SW version every 1 hour
+//    - If you changed CACHE_VERSION in sw.js, app auto-reloads
+//    - Users get your updates without manually refreshing
+// =====================================================
+
+var weatherRefreshInterval = null;
+var swUpdateCheckInterval = null;
+var lastWeatherRefresh = null;
+
+function initAutoRefresh() {
+    // Store initial time
+    lastWeatherRefresh = Date.now();
+    
+    // =====================================================
+    // 1. WEATHER AUTO-REFRESH - EVERY 1 HOUR
+    // =====================================================
+    weatherRefreshInterval = setInterval(function() {
+        if (currentLocation) {
+            console.log('[AgriXen] Auto-refreshing weather...');
+            loadWeather(currentLocation.lat, currentLocation.lon);
+            lastWeatherRefresh = Date.now();
+        }
+    }, 3600000); // 1 hour = 3600000ms
+    
+    // Also refresh when app comes back to focus after 30+ minutes
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && currentLocation) {
+            var timeSinceRefresh = Date.now() - lastWeatherRefresh;
+            var thirtyMinutes = 30 * 60 * 1000;
+            
+            if (timeSinceRefresh >= thirtyMinutes) {
+                console.log('[AgriXen] App focused after 30+ min, refreshing weather...');
+                loadWeather(currentLocation.lat, currentLocation.lon);
+                lastWeatherRefresh = Date.now();
+            }
+        }
+    });
+    
+    // =====================================================
+    // 2. PWA UPDATE CHECK - EVERY 1 HOUR
+    // =====================================================
+    if ('serviceWorker' in navigator) {
+        // Check for SW updates every 1 hour
+        swUpdateCheckInterval = setInterval(function() {
+            checkForSWUpdate();
+        }, 3600000); // 1 hour
+        
+        // Also check when app comes to focus after being in background
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                checkForSWUpdate();
+            }
+        });
+        
+        // Listen for SW controller change (new version activated)
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            console.log('[AgriXen] New Service Worker activated, reloading...');
+            window.location.reload();
+        });
+    }
+    
+    console.log('[AgriXen] Auto-refresh initialized - Weather & PWA updates every 1 hour');
+}
+
+function checkForSWUpdate() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(function(registration) {
+            if (registration) {
+                console.log('[AgriXen] Checking for Service Worker updates...');
+                registration.update().then(function() {
+                    console.log('[AgriXen] SW update check complete');
+                }).catch(function(err) {
+                    console.log('[AgriXen] SW update check failed:', err);
+                });
+            }
+        });
+    }
 }
 
 function hideLoadingScreen() {
@@ -322,6 +410,14 @@ function hideLoadingScreen() {
     }
     
     console.log('AgriXen loaded successfully!');
+    
+    // Show Barn-E guide for ALL first-time visitors
+    var hasSeenGuide = localStorage.getItem('agrixen_seen_guide');
+    if (!hasSeenGuide) {
+        setTimeout(function() {
+            document.getElementById('barneGuideModal').classList.remove('hidden');
+        }, 1000);
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -1349,6 +1445,78 @@ function renderVets() {
 }
 
 // =====================================================
+// VET REGISTRATION FUNCTIONS
+// =====================================================
+
+function initVetRegisterForm() {
+    // Populate county dropdown for vet registration
+    var vetRegisterCounty = document.getElementById('vetRegisterCounty');
+    if (vetRegisterCounty) {
+        var counties = Object.keys(COUNTIES).sort();
+        for (var i = 0; i < counties.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = counties[i];
+            opt.textContent = counties[i];
+            vetRegisterCounty.appendChild(opt);
+        }
+    }
+    
+    // Setup form submission
+    var vetRegisterForm = document.getElementById('vetRegisterForm');
+    if (vetRegisterForm) {
+        vetRegisterForm.addEventListener('submit', handleVetRegisterSubmit);
+    }
+}
+
+function showVetRegister() {
+    document.getElementById('vetRegisterModal').classList.remove('hidden');
+}
+
+function closeVetRegister() {
+    document.getElementById('vetRegisterModal').classList.add('hidden');
+}
+
+function closeVetRegisterSuccess() {
+    document.getElementById('vetRegisterSuccessModal').classList.add('hidden');
+}
+
+function handleVetRegisterSubmit(e) {
+    e.preventDefault();
+    
+    var form = e.target;
+    var formData = new FormData(form);
+    
+    // Show loading state
+    var submitBtn = form.querySelector('button[type="submit"]');
+    var originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Submitting...';
+    submitBtn.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(function(response) {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        
+        if (response.ok) {
+            form.reset();
+            document.getElementById('vetRegisterModal').classList.add('hidden');
+            document.getElementById('vetRegisterSuccessModal').classList.remove('hidden');
+        } else {
+            toast('Something went wrong. Please try again.');
+        }
+    }).catch(function(error) {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        toast('Network error. Please check your connection.');
+    });
+}
+
+// =====================================================
 // BARN-E AI
 // =====================================================
 
@@ -1465,157 +1633,929 @@ function formatAIResponse(text) {
     return '<p>' + formatted + '</p>';
 }
 
+
+
 // =====================================================
 // BARN-E AI - LOCAL RESPONSE ENGINE
 // =====================================================
 // ★★★ EXPAND THIS SECTION WITH MORE FARMING KNOWLEDGE ★★★
-// This function generates AI responses without needing a server.
-// Add more patterns and responses below to make Barn-E smarter!
-// =====================================================
-
 function generateLocalResponse(message, topic) {
     var lowerMsg = message.toLowerCase();
     var currentMonth = new Date().toLocaleString('en', { month: 'short' });
+    var currentMonthFull = new Date().toLocaleString('en', { month: 'long' });
     var html = '';
     
-    // ----- GREETINGS -----
-    if (lowerMsg.match(/^(hi|hello|hey|greetings|howdy|jambo|hujambo)/)) {
-        html = '<p><strong>Jambo!</strong> Welcome to AgriXen!</p>';
-        html += '<p>I am Barn-E, your farming assistant. I can help you with:</p>';
-        html += '<ul><li>Crop recommendations and planting schedules</li><li>Livestock health and management</li><li>Pest and disease identification</li></ul>';
+    // =====================================================
+    // STEP 1: CHECK SPECIFIC INTENT QUERIES FIRST
+    // These must be checked BEFORE any keyword matching!
+    // =====================================================
+    
+    // "What can I plant" - MUST be before any "plant" keyword matching
+    if (lowerMsg.match(/\b(what can i plant|what to plant|can i plant|should i plant|what should i plant)\b/)) {
+        var inSeasonCrops = CROP_DATA.filter(function(c) { return c.seasons.indexOf(currentMonth) !== -1; });
+        html = '<p><strong>🌱 What to Plant in ' + currentMonthFull + '</strong></p>';
+        html += '<p><strong>Crops in season NOW:</strong></p>';
+        html += '<ul>';
+        for (var i = 0; i < Math.min(8, inSeasonCrops.length); i++) {
+            html += '<li>' + inSeasonCrops[i].name + '</li>';
+        }
+        html += '</ul>';
+        html += '<p><strong>Kenya Planting Calendar:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Long Rains (Mar-May):</strong> Maize, beans, potatoes, vegetables, rice</li>';
+        html += '<li><strong>Short Rains (Oct-Dec):</strong> Maize, beans, sorghum, millet, cowpeas</li>';
+        html += '</ul>';
+        html += '<p><em>Tap on crops in the Crops tab for detailed planting guides!</em></p>';
+        return html;
+    }
+    
+    // "plant now" or "plant this month"
+    if (lowerMsg.match(/\b(plant now|plant this month|planting now|planting this month)\b/)) {
+        var inSeasonCrops = CROP_DATA.filter(function(c) { return c.seasons.indexOf(currentMonth) !== -1; });
+        html = '<p><strong>🌱 What to Plant in ' + currentMonthFull + '</strong></p>';
+        html += '<p><strong>Crops in season NOW:</strong></p>';
+        html += '<ul>';
+        for (var i = 0; i < Math.min(8, inSeasonCrops.length); i++) {
+            html += '<li>' + inSeasonCrops[i].name + '</li>';
+        }
+        html += '</ul>';
+        html += '<p><em>Set your county for location-specific recommendations!</em></p>';
+        return html;
+    }
+    
+    // "What do you know" / capabilities
+    if (lowerMsg.match(/\b(what do you know|what can you|your capabilities|your abilities|what you know|what are your features|what can i ask)\b/)) {
+        html = '<p><strong>Here is what I know! 🧠</strong></p>';
+        html += '<p><strong>🌱 CROPS (26 types):</strong></p>';
+        html += '<p>Cereals: Maize, Rice, Sorghum, Millet</p>';
+        html += '<p>Vegetables: Tomatoes, Kale, Cabbage, Spinach, Onions, Carrots, Capsicum</p>';
+        html += '<p>Roots: Potatoes, Sweet Potatoes, Cassava</p>';
+        html += '<p>Legumes: Beans, Cowpeas, Groundnuts</p>';
+        html += '<p>Fruits: Bananas, Mangoes, Avocados, Watermelon, Passion Fruit, Pumpkin</p>';
+        html += '<p>Cash Crops: Coffee, Tea, Sugarcane</p>';
+        html += '<p><strong>🐄 LIVESTOCK (8 types):</strong></p>';
+        html += '<p>Dairy Cattle, Beef Cattle, Goats, Poultry, Sheep, Pigs, Rabbits, Fish</p>';
+        html += '<p><strong>🐛 PESTS & DISEASES:</strong></p>';
+        html += '<p>Armyworms, Aphids, Blights, Wilts, Newcastle, Mastitis, ASF, Coccidiosis</p>';
+        html += '<p><strong>🧪 OTHER:</strong> Soil, Fertilizers, Manure, Compost, Irrigation, Harvesting, Storage</p>';
+        html += '<p><em>Just ask! Example: "Tell me about maize" or "How to treat aphids?"</em></p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 2: GREETINGS & CASUAL CONVERSATION
+    // =====================================================
+    
+    if (lowerMsg.match(/^(hi|hello|hey|greetings|howdy|jambo|hujambo|sasa|niaje|mambo|vipi|habari)\b/) || 
+        lowerMsg.match(/\b(hi there|hello there|hey there)\b/)) {
+        html = '<p><strong>Jambo sana!</strong> Habari yako? 👋</p>';
+        html += '<p>I am <strong>Barn-E</strong>, your AI farming assistant for Kenya!</p>';
+        html += '<p><strong>I can help you with:</strong></p>';
+        html += '<ul>';
+        html += '<li>🌱 <strong>Crops:</strong> 26 crops with planting guides</li>';
+        html += '<li>🐄 <strong>Livestock:</strong> Care for cattle, goats, chickens, and more</li>';
+        html += '<li>🐛 <strong>Pests & Diseases:</strong> Identification and treatment</li>';
+        html += '<li>💰 <strong>Market:</strong> Buying, selling, profit calculation</li>';
+        html += '</ul>';
+        html += '<p><em>Try: "What can I plant now?" or "Tell me about tomatoes"</em></p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(good morning|morning|habari za asubuhi)\b/)) {
+        html = '<p><strong>Good morning, farmer! ☀️</strong></p>';
+        html += '<p>Asante kwa kuamka mapema!</p>';
+        html += '<p><strong>How can I help?</strong></p>';
+        html += '<ul>';
+        html += '<li>🌱 Check crops to plant this month</li>';
+        html += '<li>🐄 Get livestock tips</li>';
+        html += '<li>🐛 Identify pests/diseases</li>';
+        html += '</ul>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(good afternoon|afternoon)\b/)) {
+        html = '<p><strong>Good afternoon! 🌤️</strong></p>';
+        html += '<p>How is your shamba? Ask me anything about farming!</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(good evening|evening)\b/)) {
+        html = '<p><strong>Good evening! 🌅</strong></p>';
+        html += '<p>Hope you had a productive day! How can I help?</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(how are you|how r u|vipi wewe|habari yako)\b/)) {
+        html = '<p><strong>Poasana, asante sana! 😊</strong></p>';
+        html += '<p>I am doing great and ready to help with farming!</p>';
         html += '<p>What would you like to know?</p>';
         return html;
     }
     
-    // ----- THANK YOU -----
-    if (lowerMsg.match(/(thank|asante|thanks|appreciate)/)) {
-        html = '<p><strong>Karibu sana!</strong> You are most welcome.</p>';
-        html += '<p>I am always here to help. Feel free to ask any farming questions.</p>';
+    if (lowerMsg.match(/\b(thank you|thanks|asante|asante sana|shukrani)\b/)) {
+        html = '<p><strong>Karibu sana! 🙏</strong></p>';
+        html += '<p>Feel free to ask anything else. Happy farming!</p>';
         return html;
     }
     
-    // ----- GOODBYE -----
-    if (lowerMsg.match(/^(bye|goodbye|see you|kwaheri)/)) {
-        html = '<p><strong>Kwaheri!</strong> Take care of your shamba!</p>';
-        html += '<p>Come back anytime you need advice.</p>';
+    if (lowerMsg.match(/^(bye|goodbye|see you|kwaheri|ta-ta|later)\b/)) {
+        html = '<p><strong>Kwaheri! Take care of your shamba! 👋</strong></p>';
+        html += '<p>Come back anytime!</p>';
         return html;
     }
     
-    // ----- PLANTING SEASON -----
-    if (lowerMsg.match(/(plant|grow|season|this month|now)/)) {
-        var inSeasonCrops = CROP_DATA.filter(function(c) { return c.seasons.indexOf(currentMonth) !== -1; });
-        html = '<p><strong>Crops to plant in ' + currentMonth + ':</strong></p>';
-        html += '<ul>';
-        for (var i = 0; i < Math.min(6, inSeasonCrops.length); i++) {
-            html += '<li>' + inSeasonCrops[i].name + ' - ' + inSeasonCrops[i].daysToHarvest + '</li>';
-        }
-        html += '</ul>';
-        html += '<p>Tap on any crop in the Crops tab for details!</p>';
+    if (lowerMsg.match(/\b(who are you|what are you|your name|tell me about yourself)\b/)) {
+        html = '<p><strong>I am Barn-E! 🤖</strong></p>';
+        html += '<p>AI assistant for <strong>AgriXen</strong> - a free farming app for Kenyan farmers!</p>';
+        html += '<p><strong>I help with:</strong> 26 crops, 8 livestock types, pests & diseases, market tips</p>';
+        html += '<p><strong>100% FREE</strong> - no account needed!</p>';
         return html;
     }
     
-    // ----- CALCULATOR HELP -----
-    if (lowerMsg.match(/(calculator|profit|loss|calculate|earnings)/)) {
-        html = '<p><strong>Profit Calculator</strong></p>';
-        html += '<p>You can use our Produce Profit Calculator in the Livestock tab!</p>';
-        html += '<p>It helps you calculate:</p>';
+    if (lowerMsg.match(/\b(who made|who created|developer|mortapps|built this|created this)\b/)) {
+        html = '<p><strong>AgriXen was created by MortApps Studios!</strong></p>';
+        html += '<p><strong>Contact:</strong></p>';
         html += '<ul>';
-        html += '<li>Total revenue from your produce</li>';
-        html += '<li>Production costs</li>';
-        html += '<li>Profit or loss margins</li>';
-        html += '</ul>';
-        html += '<p>Supports: Eggs, Milk, Rabbits, Honey, Chicken, Beef, Pork, Goat Meat, Mutton, and Manure.</p>';
-        return html;
-    }
-    
-    // ----- FIT TAG EXPLANATION -----
-    if (lowerMsg.match(/(fit tag|fit badge|what is fit|fit for my area)/)) {
-        html = '<p><strong>About the "Fit" Tag</strong></p>';
-        html += '<p>When you select your county from the location menu, crops that grow best in your region will show a "Fit" tag.</p>';
-        html += '<p>This is based on:</p>';
-        html += '<ul>';
-        html += '<li>Your county\'s climate and altitude</li>';
-        html += '<li>Soil types common in your area</li>';
-        html += '<li>Historical farming success in the region</li>';
-        html += '</ul>';
-        html += '<p>Tap the location icon in the header to set your county!</p>';
-        return html;
-    }
-    
-    // ----- FISH FARMING -----
-    if (lowerMsg.match(/(fish|aquaculture|tilapia|catfish|pond)/)) {
-        html = '<p><strong>Fish Farming in Kenya</strong></p>';
-        html += '<p>Popular species: <strong>Tilapia</strong> and <strong>Catfish</strong></p>';
-        html += '<p>Key tips:</p>';
-        html += '<ul>';
-        html += '<li>Stock 2-5 fish per square meter</li>';
-        html += '<li>Maintain water pH between 6.5-9.0</li>';
-        html += '<li>Feed 2-3 times daily</li>';
-        html += '<li>Harvest after 6-8 months</li>';
-        html += '</ul>';
-        html += '<p>Check the Livestock tab for more fish farming tips!</p>';
-        return html;
-    }
-    
-    // ----- FARMER OF THE WEEK -----
-    if (lowerMsg.match(/(farmer of the week|farmers of the week|featured farmer|harvest competition|submit harvest|thursday)/)) {
-        var today = new Date().getDay();
-        var isThursday = today === 4;
-        
-        html = '<p><strong>🏆 Farmers of the Week</strong></p>';
-        html += '<p>Every week, we showcase the top 3 farmers with the best harvests!</p>';
-        html += '<p><strong>Timeline:</strong></p>';
-        html += '<ul>';
-        html += '<li><strong>Thursday</strong> - Submit your harvest photos via WhatsApp</li>';
-        html += '<li><strong>Friday 12:00 PM</strong> - New winners announced!</li>';
-        html += '<li><strong>Friday to Monday</strong> - Farmers displayed in the app</li>';
-        html += '</ul>';
-        
-        if (isThursday) {
-            html += '<p>🗓️ <strong>Today is Thursday!</strong> This is your chance to submit your best harvest!</p>';
-            html += '<p>Scroll down to the Farmers of the Week section and tap the WhatsApp button to send your photos!</p>';
-        } else {
-            html += '<p>Get your best harvest photos ready for Thursday!</p>';
-        }
-        
-        html += '<p><strong>How to participate:</strong></p>';
-        html += '<ul>';
-        html += '<li>Must be a member of the AgriXen community</li>';
-        html += '<li>Send 2 clear photos of your harvest/produce</li>';
-        html += '<li>Include your name and county</li>';
+        html += '<li>📧 labs@mortappsstudios.com</li>';
+        html += '<li>📧 agrixen.ke@gmail.com</li>';
+        html += '<li>📱 +254 113 400 063</li>';
         html += '</ul>';
         return html;
     }
     
-    // ----- SUBMIT / PARTICIPATE -----
-    if (lowerMsg.match(/(submit|participate|competition|win|featured)/)) {
-        html = '<p><strong>How to Get Featured</strong></p>';
-        html += '<p>Want to be one of our Farmers of the Week?</p>';
+    if (lowerMsg.match(/\b(contact|support|phone number|email address|help desk)\b/)) {
+        html = '<p><strong>Contact AgriXen:</strong></p>';
         html += '<ul>';
-        html += '<li>Join the AgriXen community (Market tab)</li>';
-        html += '<li>On Thursday, submit your best harvest photos via WhatsApp</li>';
-        html += '<li>Include your name, county, and what you farm</li>';
+        html += '<li>📧 labs@mortappsstudios.com</li>';
+        html += '<li>📧 agrixen.ke@gmail.com</li>';
+        html += '<li>📱 +254 113 400 063</li>';
         html += '</ul>';
-        html += '<p>Winners are announced every Friday at 12:00 PM!</p>';
         return html;
     }
     
-    // ----- ADD MORE RESPONSE PATTERNS BELOW THIS LINE -----
-    // Example format:
-    // if (lowerMsg.match(/(your keywords here)/)) {
-    //     html = '<p><strong>Your response title</strong></p>';
-    //     html += '<p>Your response content...</p>';
-    //     return html;
-    // }
+    // =====================================================
+    // STEP 3: SPECIFIC TOPIC QUERIES (before keyword matching)
+    // =====================================================
     
-    // ----- DEFAULT FALLBACK RESPONSE -----
-    html = '<p>I understand you are asking about: <strong>' + message + '</strong></p>';
-    html += '<p>Could you share more details about your specific situation? This will help me give better advice.</p>';
+    // Planting calendar/seasons
+    if (lowerMsg.match(/\b(planting season|farming calendar|when to plant|planting calendar|season calendar)\b/)) {
+        html = '<p><strong>📅 Kenya Planting Calendar</strong></p>';
+        html += '<p><strong>Long Rains (Mar-May):</strong> Maize, beans, potatoes, vegetables, rice</p>';
+        html += '<p><strong>Short Rains (Oct-Dec):</strong> Maize, beans, sorghum, millet, cowpeas</p>';
+        html += '<p><strong>Year-round (with water):</strong> Tomatoes, onions, vegetables, watermelon</p>';
+        return html;
+    }
+    
+    // Land preparation
+    if (lowerMsg.match(/\b(land preparation|prepare land|prepare soil|prepare my farm)\b/)) {
+        html = '<p><strong>🌱 Land Preparation</strong></p>';
+        html += '<ol>';
+        html += '<li><strong>Clear land</strong> - Remove trees, bushes, rocks</li>';
+        html += '<li><strong>Plough</strong> - 2-4 weeks before planting, 15-30cm deep</li>';
+        html += '<li><strong>Add organic matter</strong> - Manure/compost 5-10 tons/acre</li>';
+        html += '<li><strong>Harrow</strong> - Break clods, level field</li>';
+        html += '<li><strong>Make rows/beds</strong> - According to crop spacing</li>';
+        html += '</ol>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 4: CROP-SPECIFIC QUERIES (check each crop by name)
+    // =====================================================
+    
+    // Maize
+    if (lowerMsg.match(/\b(maize|corn|mahindi)\b/)) {
+        html = '<p><strong>🌽 Maize Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Mar-May (long rains), Oct-Dec (short rains)</p>';
+        html += '<p><strong>Harvest:</strong> 90-120 days</p>';
+        html += '<p><strong>Spacing:</strong> 75cm rows, 25cm plants</p>';
+        html += '<p><strong>Varieties:</strong> H614D, H6213, Duma 43</p>';
+        html += '<p><strong>Fertilizer:</strong> DAP at planting, CAN when knee-high</p>';
+        html += '<p><strong>⚠️ Threats:</strong> Fall armyworm, stalk borer, MLN disease</p>';
+        html += '<p><strong>Yield:</strong> 15-30 bags/acre</p>';
+        html += '<p><strong>Best regions:</strong> Trans Nzoia, Uasin Gishu, Nakuru</p>';
+        return html;
+    }
+    
+    // Beans
+    if (lowerMsg.match(/\b(beans?|bean|maharage)\b/)) {
+        html = '<p><strong>🫘 Beans Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Mar-May, Oct-Dec</p>';
+        html += '<p><strong>Harvest:</strong> 60-90 days</p>';
+        html += '<p><strong>Spacing:</strong> 50cm rows, 10cm plants</p>';
+        html += '<p><strong>Varieties:</strong> Wairimu, Rose Coco, Mwitemania</p>';
+        html += '<p><strong>Benefits:</strong> Fixes nitrogen, good for intercropping with maize</p>';
+        html += '<p><strong>Yield:</strong> 4-8 bags/acre</p>';
+        return html;
+    }
+    
+    // Tomatoes
+    if (lowerMsg.match(/\b(tomato|tomatoes|nyanya)\b/)) {
+        html = '<p><strong>🍅 Tomato Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Year-round with irrigation</p>';
+        html += '<p><strong>Harvest:</strong> 75-90 days</p>';
+        html += '<p><strong>Spacing:</strong> 90cm rows, 60cm plants</p>';
+        html += '<p><strong>Varieties:</strong> Anna F1, Cal J, Rio Grande, Kilele F1</p>';
+        html += '<p><strong>Tips:</strong> Stake plants, mulch, prune for air flow</p>';
+        html += '<p><strong>⚠️ Problems:</strong> Tuta absoluta, late blight, bacterial wilt</p>';
+        html += '<p><strong>Yield:</strong> 15,000-30,000 kg/acre</p>';
+        return html;
+    }
+    
+    // Kale/Sukuma
+    if (lowerMsg.match(/\b(kale|sukuma|sukuma wiki)\b/)) {
+        html = '<p><strong>🥬 Kale (Sukuma Wiki)</strong></p>';
+        html += '<p><strong>Season:</strong> Year-round!</p>';
+        html += '<p><strong>Harvest:</strong> 45-60 days, continuous for months</p>';
+        html += '<p><strong>Spacing:</strong> 60cm rows, 45cm plants</p>';
+        html += '<p><strong>Tips:</strong> Harvest outer leaves first, apply manure regularly</p>';
+        html += '<p><strong>Yield:</strong> 8,000-15,000 kg/acre</p>';
+        return html;
+    }
+    
+    // Potatoes
+    if (lowerMsg.match(/\b(potato|potatoes|waru|viazi)\b/)) {
+        html = '<p><strong>🥔 Potato Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Mar-Apr, Aug-Sep</p>';
+        html += '<p><strong>Harvest:</strong> 90-120 days</p>';
+        html += '<p><strong>Spacing:</strong> 75cm rows, 30cm plants</p>';
+        html += '<p><strong>Varieties:</strong> Shangi, Tigoni, Desiree, Asante</p>';
+        html += '<p><strong>⚠️ Use CERTIFIED seed potatoes!</strong></p>';
+        html += '<p><strong>Diseases:</strong> Late blight, bacterial wilt</p>';
+        html += '<p><strong>Yield:</strong> 80-150 bags/acre</p>';
+        html += '<p><strong>Best regions:</strong> Nyandarua, Nakuru, Meru</p>';
+        return html;
+    }
+    
+    // Onions
+    if (lowerMsg.match(/\b(onion|onions|kitunguu)\b/)) {
+        html = '<p><strong>🧅 Onion Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Jan-Feb, Jun-Jul</p>';
+        html += '<p><strong>Harvest:</strong> 90-150 days</p>';
+        html += '<p><strong>Varieties:</strong> Red Creole, Texas Grano, Bombay Red</p>';
+        html += '<p><strong>Tips:</strong> Stop watering when tops fall over, cure before storage</p>';
+        html += '<p><strong>Yield:</strong> 8,000-15,000 kg/acre</p>';
+        return html;
+    }
+    
+    // Cabbage
+    if (lowerMsg.match(/\b(cabbage|kabichi)\b/)) {
+        html = '<p><strong>🥬 Cabbage Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Feb-Mar, Aug-Sep</p>';
+        html += '<p><strong>Harvest:</strong> 85-110 days</p>';
+        html += '<p><strong>Varieties:</strong> Gloria F1, Queen of Heaven</p>';
+        html += '<p><strong>Yield:</strong> 10,000-20,000 heads/acre</p>';
+        return html;
+    }
+    
+    // Spinach
+    if (lowerMsg.match(/\b(spinach)\b/)) {
+        html = '<p><strong>🥬 Spinach Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Year-round</p>';
+        html += '<p><strong>Harvest:</strong> 40-50 days</p>';
+        html += '<p><strong>Tips:</strong> Pick outer leaves, prefers cool weather</p>';
+        return html;
+    }
+    
+    // Carrots
+    if (lowerMsg.match(/\b(carrot|carrots|mkaroti)\b/)) {
+        html = '<p><strong>🥕 Carrot Farming</strong></p>';
+        html += '<p><strong>Season:</strong> Feb-Mar, Aug-Sep</p>';
+        html += '<p><strong>Harvest:</strong> 70-100 days</p>';
+        html += '<p><strong>⚠️ Do NOT add fresh manure - causes forked roots!</strong></p>';
+        return html;
+    }
+    
+    // Bananas
+    if (lowerMsg.match(/\b(banana|bananas|ndizi)\b/)) {
+        html = '<p><strong>🍌 Banana Farming</strong></p>';
+        html += '<p><strong>First Harvest:</strong> 12-18 months</p>';
+        html += '<p><strong>Spacing:</strong> 3m x 3m</p>';
+        html += '<p><strong>Varieties:</strong> Williams, Grand Nain, Apple banana</p>';
+        html += '<p><strong>Tips:</strong> Plant healthy suckers, mulch heavily, remove dead leaves</p>';
+        html += '<p><strong>Yield:</strong> 30-60 bunches/acre/year</p>';
+        return html;
+    }
+    
+    // Avocados
+    if (lowerMsg.match(/\b(avocado|avocados|parachichi)\b/)) {
+        html = '<p><strong>🥑 Avocado Farming</strong></p>';
+        html += '<p><strong>First Fruit:</strong> 3-5 years (grafted)</p>';
+        html += '<p><strong>Spacing:</strong> 6-10m between trees</p>';
+        html += '<p><strong>Varieties:</strong> Hass (export), Fuerte</p>';
+        html += '<p><strong>Yield:</strong> 300-500 fruits/tree annually</p>';
+        html += '<p><strong>Tips:</strong> Graft for faster fruiting, mulch heavily</p>';
+        return html;
+    }
+    
+    // Mangoes
+    if (lowerMsg.match(/\b(mango|mangoes|embe)\b/)) {
+        html = '<p><strong>🥭 Mango Farming</strong></p>';
+        html += '<p><strong>First Fruit:</strong> 3-5 years (grafted)</p>';
+        html += '<p><strong>Varieties:</strong> Apple, Ngowe, Tommy Atkins</p>';
+        html += '<p><strong>Tips:</strong> Graft for quality, prune after harvest</p>';
+        html += '<p><strong>Best regions:</strong> Machakos, Makueni, Kitui, Kilifi</p>';
+        return html;
+    }
+    
+    // Coffee
+    if (lowerMsg.match(/\b(coffee|kahawa)\b/)) {
+        html = '<p><strong>☕ Coffee Farming</strong></p>';
+        html += '<p><strong>First Harvest:</strong> 3-4 years</p>';
+        html += '<p><strong>Spacing:</strong> 2.5m x 2.5m (~1600 trees/acre)</p>';
+        html += '<p><strong>Varieties:</strong> SL28, SL34, Batian, Ruiru 11</p>';
+        html += '<p><strong>Tips:</strong> Needs shade trees, prune regularly, pick ripe cherries only</p>';
+        return html;
+    }
+    
+    // Tea
+    if (lowerMsg.match(/\b(tea|chai)\b/)) {
+        html = '<p><strong>🍵 Tea Farming</strong></p>';
+        html += '<p><strong>First Harvest:</strong> 3-5 years</p>';
+        html += '<p><strong>Tips:</strong> Pick 2 leaves + bud, pluck every 7-14 days</p>';
+        html += '<p><strong>Needs:</strong> Cool highlands, acidic soil (pH 4.5-5.5)</p>';
+        html += '<p><strong>Best regions:</strong> Kericho, Bomet, Nandi, Kisii</p>';
+        return html;
+    }
+    
+    // Sorghum
+    if (lowerMsg.match(/\b(sorghum|mtema|mtama)\b/)) {
+        html = '<p><strong>🌾 Sorghum Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 100-120 days</p>';
+        html += '<p><strong>Varieties:</strong> Serena, Serendo, Gadam (60-70 days)</p>';
+        html += '<p><strong>Benefits:</strong> Drought tolerant, low input, brewery demand</p>';
+        html += '<p><strong>Yield:</strong> 5-12 bags/acre</p>';
+        return html;
+    }
+    
+    // Millet
+    if (lowerMsg.match(/\b(millet|wimbi|uwele)\b/)) {
+        html = '<p><strong>🌾 Millet Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 90-100 days</p>';
+        html += '<p><strong>Benefits:</strong> Very drought tolerant, nutritious</p>';
+        html += '<p><strong>Yield:</strong> 3-6 bags/acre</p>';
+        return html;
+    }
+    
+    // Cassava
+    if (lowerMsg.match(/\b(cassava|muhogo)\b/)) {
+        html = '<p><strong>🥔 Cassava Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 8-12 months</p>';
+        html += '<p><strong>Benefits:</strong> Drought tolerant, food security</p>';
+        html += '<p><strong>⚠️ ALWAYS cook thoroughly before eating!</strong></p>';
+        html += '<p><strong>Yield:</strong> 10-25 tons/acre</p>';
+        return html;
+    }
+    
+    // Sweet Potato
+    if (lowerMsg.match(/\b(sweet potato|ngwaci)\b/)) {
+        html = '<p><strong>🍠 Sweet Potato Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 90-150 days</p>';
+        html += '<p><strong>Tips:</strong> Plant vine cuttings, leaves also edible</p>';
+        html += '<p><strong>Yield:</strong> 8-15 tons/acre</p>';
+        return html;
+    }
+    
+    // Watermelon
+    if (lowerMsg.match(/\b(watermelon|tikiti)\b/)) {
+        html = '<p><strong>🍉 Watermelon Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 80-100 days</p>';
+        html += '<p><strong>Varieties:</strong> Sugar Baby, Sukari F1</p>';
+        html += '<p><strong>Tips:</strong> Stop watering 1 week before harvest for sweetness</p>';
+        html += '<p><strong>Yield:</strong> 10,000-20,000 fruits/acre</p>';
+        return html;
+    }
+    
+    // Rice
+    if (lowerMsg.match(/\b(rice|mpunga)\b/)) {
+        html = '<p><strong>🍚 Rice Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 100-150 days</p>';
+        html += '<p><strong>Needs:</strong> Flooded fields or reliable irrigation</p>';
+        html += '<p><strong>Areas:</strong> Mwea, Ahero, Bunyala</p>';
+        html += '<p><strong>Yield:</strong> 20-40 bags/acre</p>';
+        return html;
+    }
+    
+    // Capsicum
+    if (lowerMsg.match(/\b(capsicum|pepper|hoho|pilipili hoho)\b/)) {
+        html = '<p><strong>🫑 Capsicum Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 70-90 days</p>';
+        html += '<p><strong>✅ High value crop!</strong></p>';
+        html += '<p><strong>Varieties:</strong> California Wonder, Rambo</p>';
+        html += '<p><strong>Yield:</strong> 8,000-15,000 kg/acre</p>';
+        return html;
+    }
+    
+    // Cowpeas
+    if (lowerMsg.match(/\b(cowpeas?|kunde)\b/)) {
+        html = '<p><strong>🫛 Cowpeas (Kunde)</strong></p>';
+        html += '<p><strong>Harvest:</strong> 60-90 days</p>';
+        html += '<p><strong>Benefits:</strong> Drought tolerant, fixes nitrogen, leaves + pods edible</p>';
+        return html;
+    }
+    
+    // Pumpkin
+    if (lowerMsg.match(/\b(pumpkin|malebwe)\b/)) {
+        html = '<p><strong>🎃 Pumpkin Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 90-120 days</p>';
+        html += '<p><strong>Spacing:</strong> 2m x 2m (vines need space)</p>';
+        html += '<p><strong>Tips:</strong> Harvest when skin hardens, stores for months</p>';
+        return html;
+    }
+    
+    // Passion Fruit
+    if (lowerMsg.match(/\b(passion\s?fruit|maracuja)\b/)) {
+        html = '<p><strong>🍇 Passion Fruit Farming</strong></p>';
+        html += '<p><strong>First Harvest:</strong> 1-2 years</p>';
+        html += '<p><strong>Varieties:</strong> Purple (highlands), Yellow (lowlands)</p>';
+        html += '<p><strong>Tips:</strong> Needs trellis support</p>';
+        return html;
+    }
+    
+    // Sugarcane
+    if (lowerMsg.match(/\b(sugarcane|muwa)\b/)) {
+        html = '<p><strong>🎋 Sugarcane Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 12-18 months</p>';
+        html += '<p><strong>Needs:</strong> Lots of water!</p>';
+        html += '<p><strong>Yield:</strong> 80-120 tons/acre</p>';
+        return html;
+    }
+    
+    // Groundnuts
+    if (lowerMsg.match(/\b(groundnut|groundnuts|peanut|peanuts|karanga)\b/)) {
+        html = '<p><strong>🥜 Groundnut Farming</strong></p>';
+        html += '<p><strong>Harvest:</strong> 90-120 days</p>';
+        html += '<p><strong>Benefits:</strong> Fixes nitrogen, high protein</p>';
+        html += '<p><strong>Yield:</strong> 6-12 bags/acre</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 5: LIVESTOCK QUERIES (check each animal by name)
+    // =====================================================
+    
+    // Dairy Cattle
+    if (lowerMsg.match(/\b(dairy\s?cattle|dairy\s?cow|dairy|friesian|ayrshire|jersey|milking\s?cow)\b/)) {
+        html = '<p><strong>🐄 Dairy Cattle</strong></p>';
+        html += '<p><strong>Breeds:</strong> Friesian (25-35L/day), Ayrshire (20-25L), Jersey (15-20L)</p>';
+        html += '<p><strong>Feeding:</strong> 50-100L water/day, fodder + dairy meal</p>';
+        html += '<p><strong>Diseases:</strong> Mastitis, tick-borne, FMD, lumpy skin</p>';
+        html += '<p><strong>Vaccinate:</strong> FMD every 6 months, lumpy skin annually</p>';
+        return html;
+    }
+    
+    // Beef Cattle
+    if (lowerMsg.match(/\b(beef\s?cattle|beef\s?cow|beef cattle|boran|sahiwal|zebu)\b/)) {
+        html = '<p><strong>🐄 Beef Cattle</strong></p>';
+        html += '<p><strong>Breeds:</strong> Boran, Sahiwal, Zebu (hardy local breeds)</p>';
+        html += '<p><strong>Feeding:</strong> Grazing + mineral licks</p>';
+        html += '<p><strong>Market:</strong> 2-4 years, 350-450kg live weight</p>';
+        return html;
+    }
+    
+    // General cattle
+    if (lowerMsg.match(/\b(cattle|cow|cows|ng'ombe)\b/)) {
+        html = '<p><strong>🐄 Cattle Farming</strong></p>';
+        html += '<p>Ask about:</p>';
+        html += '<ul>';
+        html += '<li>🥛 <strong>"Dairy cattle"</strong> - Milk production</li>';
+        html += '<li>🥩 <strong>"Beef cattle"</strong> - Meat production</li>';
+        html += '</ul>';
+        html += '<p><strong>General:</strong> Deworm every 3 months, vaccinate FMD/lumpy skin, dip weekly for ticks</p>';
+        return html;
+    }
+    
+    // Goats
+    if (lowerMsg.match(/\b(goat|goats|mbuzi)\b/)) {
+        html = '<p><strong>🐐 Goat Farming</strong></p>';
+        html += '<p><strong>Breeds:</strong> Galla (hardy), Saanen (milk 3-5L/day), Boer (meat)</p>';
+        html += '<p><strong>Feeding:</strong> Browse shrubs/leaves + hay supplement</p>';
+        html += '<p><strong>Housing:</strong> Raised floor, keep dry</p>';
+        html += '<p><strong>Health:</strong> Deworm every 2-3 months, vaccinate PPR</p>';
+        html += '<p><strong>Gestation:</strong> 150 days, 1-3 kids per birth</p>';
+        return html;
+    }
+    
+    // Poultry
+    if (lowerMsg.match(/\b(chicken|chickens|kuku|poultry|layers?|broilers?|kienyeji|kuroiler)\b/)) {
+        html = '<p><strong>🐔 Poultry Farming</strong></p>';
+        html += '<p><strong>Types:</strong> Layers, Broilers, Kienyeji, Kuroiler</p>';
+        html += '<p><strong>Feeding:</strong> Layers 120-150g/bird/day, fresh water always</p>';
+        html += '<p><strong>Housing:</strong> 1 sq ft/bird, ventilated, clean litter</p>';
+        html += '<p><strong>⚠️ Newcastle Disease:</strong> Vaccinate EVERY 3 MONTHS! No cure!</p>';
+        html += '<p><strong>Other diseases:</strong> Gumboro, Coccidiosis, Fowl Pox</p>';
+        return html;
+    }
+    
+    // Sheep
+    if (lowerMsg.match(/\b(sheep|kondoo)\b/)) {
+        html = '<p><strong>🐑 Sheep Farming</strong></p>';
+        html += '<p><strong>Breeds:</strong> Red Maasai (hardy), Dorper (meat), Merino (wool)</p>';
+        html += '<p><strong>Feeding:</strong> Grazing + mineral blocks</p>';
+        html += '<p><strong>Health:</strong> Foot rot prevention, regular deworming</p>';
+        html += '<p><strong>Market:</strong> 8-12 months, 30-45kg</p>';
+        return html;
+    }
+    
+    // Pigs
+    if (lowerMsg.match(/\b(pig|pigs|swine|nguruwe)\b/)) {
+        html = '<p><strong>🐷 Pig Farming</strong></p>';
+        html += '<p><strong>Breeds:</strong> Large White, Landrace, Duroc</p>';
+        html += '<p><strong>Feeding:</strong> Kitchen waste (cooked), grains, 2-3kg/day</p>';
+        html += '<p><strong>Housing:</strong> Shade + mud wallows (cannot sweat!)</p>';
+        html += '<p><strong>🚨 African Swine Fever:</strong> NO CURE! Strict biosecurity!</p>';
+        html += '<p><strong>Market:</strong> 90-100kg at 6-7 months</p>';
+        return html;
+    }
+    
+    // Rabbits
+    if (lowerMsg.match(/\b(rabbit|rabbits|sungura)\b/)) {
+        html = '<p><strong>🐰 Rabbit Farming</strong></p>';
+        html += '<p><strong>Breeds:</strong> New Zealand White, California, Flemish Giant</p>';
+        html += '<p><strong>Feeding:</strong> 80% hay + vegetables + pellets</p>';
+        html += '<p><strong>Housing:</strong> Wire cages off ground</p>';
+        html += '<p><strong>Gestation:</strong> 28-35 days, 6-12 kits, wean 6-8 weeks</p>';
+        html += '<p><strong>Market:</strong> 2-3kg at 4-5 months</p>';
+        return html;
+    }
+    
+    // Fish
+    if (lowerMsg.match(/\b(fish|aquaculture|tilapia|catfish|samaki|pond)\b/)) {
+        html = '<p><strong>🐟 Fish Farming</strong></p>';
+        html += '<p><strong>Species:</strong> Nile Tilapia, African Catfish</p>';
+        html += '<p><strong>Stocking:</strong> 2-5 fish/sq meter</p>';
+        html += '<p><strong>Water:</strong> pH 6.5-9.0, replace 10-20% weekly</p>';
+        html += '<p><strong>Feeding:</strong> 2-3 times daily, floating pellets, don\'t overfeed!</p>';
+        html += '<p><strong>Harvest:</strong> 6-8 months</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 6: PESTS & DISEASES
+    // =====================================================
+    
+    // Fall Armyworm
+    if (lowerMsg.match(/\b(armyworm|fall armyworm|army worm)\b/)) {
+        html = '<p><strong>🐛 Fall Armyworm</strong></p>';
+        html += '<p><strong>Attacks:</strong> Maize, sorghum, millet, rice</p>';
+        html += '<p><strong>Signs:</strong> Windowpane leaves, sawdust in whorl, ragged leaves</p>';
+        html += '<p><strong>Control:</strong></p>';
+        html += '<ul>';
+        html += '<li>Scout DAILY</li>';
+        html += '<li>Sand in whorl (traditional)</li>';
+        html += '<li>Chemicals: Emamectin, Spinosad (when larvae young)</li>';
+        html += '<li>Push-pull with Desmodium/Napier</li>';
+        html += '</ul>';
+        return html;
+    }
+    
+    // Aphids
+    if (lowerMsg.match(/\b(aphid|aphids)\b/)) {
+        html = '<p><strong>🐛 Aphids</strong></p>';
+        html += '<p><strong>Signs:</strong> Clusters on young leaves, curled leaves, sticky honeydew</p>';
+        html += '<p><strong>Control:</strong></p>';
+        html += '<ul>';
+        html += '<li>Strong water spray</li>';
+        html += '<li>Soap spray (1-2 tbsp/L water)</li>';
+        html += '<li>Neem oil</li>';
+        html += '<li>Encourage ladybugs</li>';
+        html += '</ul>';
+        return html;
+    }
+    
+    // Blight
+    if (lowerMsg.match(/\b(blight|late blight|early blight)\b/)) {
+        html = '<p><strong>🍄 Blight Disease</strong></p>';
+        html += '<p><strong>Late Blight:</strong> Water-soaked patches, white mold - very serious!</p>';
+        html += '<p><strong>Early Blight:</strong> Target-like spots</p>';
+        html += '<p><strong>Control:</strong> Resistant varieties, copper fungicides, remove infected plants, good spacing, crop rotation</p>';
+        return html;
+    }
+    
+    // Wilt
+    if (lowerMsg.match(/\b(wilt|wilting|bacterial wilt)\b/)) {
+        html = '<p><strong>🦠 Wilt Disease</strong></p>';
+        html += '<p><strong>Signs:</strong> Rapid wilting, white ooze when cut stem in water</p>';
+        html += '<p><strong>⚠️ NO CURE!</strong></p>';
+        html += '<p><strong>Management:</strong> Remove infected plants, rotate 3-5 years, clean seed, good drainage</p>';
+        return html;
+    }
+    
+    // Newcastle
+    if (lowerMsg.match(/\b(newcastle|newcastle disease)\b/)) {
+        html = '<p><strong>🚨 Newcastle Disease</strong></p>';
+        html += '<p><strong>⚠️ HIGHLY FATAL - Can wipe out flocks!</strong></p>';
+        html += '<p><strong>Signs:</strong> Breathing difficulty, twisted neck, sudden death</p>';
+        html += '<p><strong>⚠️ NO CURE! Vaccinate EVERY 3 MONTHS!</strong></p>';
+        return html;
+    }
+    
+    // Mastitis
+    if (lowerMsg.match(/\b(mastitis)\b/)) {
+        html = '<p><strong>🥛 Mastitis (Dairy Cows)</strong></p>';
+        html += '<p><strong>Signs:</strong> Swollen udder, clots/blood in milk, fever</p>';
+        html += '<p><strong>Treatment:</strong> Call vet, antibiotics, frequent milking</p>';
+        html += '<p><strong>Prevention:</strong> Clean teats before/after milking, clean bedding</p>';
+        return html;
+    }
+    
+    // ASF
+    if (lowerMsg.match(/\b(african swine fever|asf|swine fever)\b/)) {
+        html = '<p><strong>🚨 African Swine Fever</strong></p>';
+        html += '<p><strong>⚠️ NO CURE! NO VACCINE! 100% DEATH!</strong></p>';
+        html += '<p><strong>Prevention:</strong> No raw pork, quarantine new pigs 21 days, disinfect everything, keep wild pigs away</p>';
+        return html;
+    }
+    
+    // Coccidiosis
+    if (lowerMsg.match(/\b(coccidiosis|coccidia)\b/)) {
+        html = '<p><strong>🐛 Coccidiosis (Poultry)</strong></p>';
+        html += '<p><strong>Signs:</strong> Blood in droppings, hunched birds</p>';
+        html += '<p><strong>Treatment:</strong> Coccidiostats in water/feed</p>';
+        html += '<p><strong>Prevention:</strong> Keep litter DRY, avoid water spills</p>';
+        return html;
+    }
+    
+    // Tuta Absoluta
+    if (lowerMsg.match(/\b(tuta|tuta absoluta|leaf miner|tomato leaf miner)\b/)) {
+        html = '<p><strong>🐛 Tuta Absoluta</strong></p>';
+        html += '<p><strong>⚠️ Can cause 100% tomato loss!</strong></p>';
+        html += '<p><strong>Signs:</strong> Mines in leaves, holes in fruits</p>';
+        html += '<p><strong>Control:</strong> Pheromone traps, remove infected material, Spinosad/Emamectin, crop rotation</p>';
+        return html;
+    }
+    
+    // Ticks
+    if (lowerMsg.match(/\b(tick|ticks)\b/)) {
+        html = '<p><strong>🐛 Tick Control</strong></p>';
+        html += '<p><strong>Diseases:</strong> East Coast Fever, Heartwater, Anaplasmosis</p>';
+        html += '<p><strong>Control:</strong> Weekly dipping/spraying with acaricides, rotate chemicals</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 7: FERTILIZER, MANURE, COMPOST (specific words)
+    // =====================================================
+    
+    // Fertilizer - match specific fertilizer names OR the word fertilizer/fertilizers
+    if (lowerMsg.match(/\b(fertilizer|fertilizers|fertiliser|fertilisers)\b/) ||
+        lowerMsg.match(/\b(dap fertilizer|can fertilizer|npk fertilizer|urea fertilizer)\b/) ||
+        lowerMsg.match(/\b(about dap|about npk|about urea)\b/)) {
+        html = '<p><strong>🧪 Fertilizer Guide</strong></p>';
+        html += '<p><strong>Types:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>DAP (18-46-0):</strong> Planting - for roots</li>';
+        html += '<li><strong>CAN (26-0-0):</strong> Top dressing - for growth</li>';
+        html += '<li><strong>NPK (17-17-17):</strong> General purpose</li>';
+        html += '<li><strong>Urea (46-0-0):</strong> Rapid green growth</li>';
+        html += '</ul>';
+        html += '<p><strong>Application:</strong></p>';
+        html += '<ul>';
+        html += '<li>Maize: DAP at planting, CAN when knee-high</li>';
+        html += '<li>Don\'t put fertilizer touching seeds!</li>';
+        html += '<li>Apply when soil is moist</li>';
+        html += '<li>Get soil test for exact needs</li>';
+        html += '</ul>';
+        html += '<p><em>Ask about "manure" or "compost" for organic options!</em></p>';
+        return html;
+    }
+    
+    // Manure
+    if (lowerMsg.match(/\b(manure|manures|animal manure)\b/)) {
+        html = '<p><strong>💩 Manure Guide</strong></p>';
+        html += '<p><strong>Types:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Cattle:</strong> Balanced, good for all crops</li>';
+        html += '<li><strong>Poultry:</strong> High nitrogen - compost first!</li>';
+        html += '<li><strong>Goat/Sheep:</strong> Rich, drier</li>';
+        html += '<li><strong>Rabbit:</strong> Very rich, can apply fresh</li>';
+        html += '</ul>';
+        html += '<p><strong>Application:</strong> 5-10 tons/acre, incorporate into soil, apply 2-4 weeks before planting</p>';
+        return html;
+    }
+    
+    // Compost
+    if (lowerMsg.match(/\b(compost|composting)\b/)) {
+        html = '<p><strong>🍂 Composting</strong></p>';
+        html += '<p><strong>Ingredients:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Green:</strong> Kitchen scraps, fresh leaves, grass</li>';
+        html += '<li><strong>Brown:</strong> Dry leaves, straw, paper</li>';
+        html += '</ul>';
+        html += '<p><strong>Method:</strong> Layer 3 brown : 1 green, keep moist, turn every 2-3 weeks</p>';
+        html += '<p><strong>Ready:</strong> 3-6 months - dark, crumbly, earthy smell</p>';
+        html += '<p><strong>Don\'t compost:</strong> Meat, dairy, pet waste, diseased plants</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 8: SOIL (after fertilizer/manure/compost)
+    // =====================================================
+    
+    if (lowerMsg.match(/\b(soil|soils|soil type|types of soil|soil ph|acidity|alkalinity)\b/)) {
+        html = '<p><strong>🌍 Soil Guide</strong></p>';
+        html += '<p><strong>Types:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Sandy:</strong> Drains fast, add organic matter</li>';
+        html += '<li><strong>Clay:</strong> Holds water, add compost</li>';
+        html += '<li><strong>Loam:</strong> Ideal for most crops</li>';
+        html += '</ul>';
+        html += '<p><strong>pH:</strong> Most crops prefer 5.5-7.0</p>';
+        html += '<p><strong>Tips:</strong> Test every 2-3 years, add organic matter, rotate crops</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 9: WATER & IRRIGATION
+    // =====================================================
+    
+    if (lowerMsg.match(/\b(water|watering|irrigation|irrigate|drip|sprinkler|maji)\b/)) {
+        html = '<p><strong>💧 Irrigation Guide</strong></p>';
+        html += '<p><strong>Best time:</strong> Early morning</p>';
+        html += '<p><strong>Methods:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Drip:</strong> Most efficient (90-95%)</li>';
+        html += '<li><strong>Sprinkler:</strong> Good for large areas</li>';
+        html += '</ul>';
+        html += '<p><strong>Tips:</strong> Water deeply but less often, mulch to reduce evaporation</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 10: HARVEST & STORAGE
+    // =====================================================
+    
+    if (lowerMsg.match(/\b(harvest|harvesting|harvest time|when to harvest|storage|storing)\b/)) {
+        html = '<p><strong>🌾 Harvest Guide</strong></p>';
+        html += '<p><strong>Signs:</strong></p>';
+        html += '<ul>';
+        html += '<li>Maize: Husks dry, kernels hard</li>';
+        html += '<li>Beans: Pods dry, seeds rattle</li>';
+        html += '<li>Tomatoes: Color changes</li>';
+        html += '<li>Potatoes: Leaves yellow</li>';
+        html += '</ul>';
+        html += '<p><strong>Best time:</strong> Early morning, dry weather</p>';
+        html += '<p><strong>Storage:</strong> Dry thoroughly, cool/dry place, hermetic bags for grain</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 11: WEATHER & SEASONS
+    // =====================================================
+    
+    if (lowerMsg.match(/\b(weather|rain|rainfall|climate|season|temperature|mvua)\b/)) {
+        html = '<p><strong>🌤️ Weather & Seasons</strong></p>';
+        html += '<p><strong>Kenya Rainfall:</strong></p>';
+        html += '<ul>';
+        html += '<li><strong>Long Rains:</strong> March - May</li>';
+        html += '<li><strong>Short Rains:</strong> October - December</li>';
+        html += '<li><strong>Dry:</strong> Jun-Sep, Jan-Feb</li>';
+        html += '</ul>';
+        html += '<p>Set your county for localized weather!</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 12: MARKET
+    // =====================================================
+    
+    if (lowerMsg.match(/\b(market|sell|buy|price|prices|profit|trade|soko)\b/)) {
+        html = '<p><strong>💰 Market</strong></p>';
+        html += '<p>Go to <strong>Market tab</strong> to:</p>';
+        html += '<ul>';
+        html += '<li>🛒 Buy farm products</li>';
+        html += '<li>💰 Sell your produce</li>';
+        html += '<li>👥 Join 7,800+ farmer community</li>';
+        html += '</ul>';
+        html += '<p><strong>Reference prices:</strong> Eggs KES 380-520/tray, Milk KES 45-70/L, Chicken KES 450-700/kg</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 13: APP NAVIGATION
+    // =====================================================
+    
+    if (lowerMsg.match(/\b(how to use|how do i|guide|help me use|app features)\b/)) {
+        html = '<p><strong>📱 Using AgriXen</strong></p>';
+        html += '<p><strong>Tabs:</strong></p>';
+        html += '<ul>';
+        html += '<li>🌱 Crops: 26 crops with details</li>';
+        html += '<li>🐄 Livestock: 8 animals + calculator</li>';
+        html += '<li>🤖 Barn-E: Chat with me!</li>';
+        html += '<li>🏥 VetLine: Find vets</li>';
+        html += '<li>🛒 Market: Buy/sell + community</li>';
+        html += '</ul>';
+        html += '<p>📍 Set county with pin icon for personalized advice!</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(location|county|set location|my area)\b/)) {
+        html = '<p><strong>📍 Set County</strong></p>';
+        html += '<p>Tap pin icon (top right) → Select county → Confirm</p>';
+        html += '<p>Benefits: Crop recommendations, local weather, market connections</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(vet|veterinary|vetline|animal doctor)\b/)) {
+        html = '<p><strong>🏥 VetLine</strong></p>';
+        html += '<p>Find vets in <strong>VetLine tab</strong> - filter by county and specialty</p>';
+        html += '<p><strong>Emergency:</strong> Kenya Veterinary Board: 020 2718370</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(calculator|profit calculator)\b/)) {
+        html = '<p><strong>🧮 Profit Calculator</strong></p>';
+        html += '<p>Find in <strong>Livestock tab</strong> - enter units, price, costs to see profit/loss</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(community|join)\b/)) {
+        html = '<p><strong>👥 Community</strong></p>';
+        html += '<p>Join 7,800+ farmers! Market tab → Community → Join Us</p>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/\b(is it free|cost|price of app|subscription)\b/)) {
+        html = '<p><strong>🎉 AgriXen is FREE!</strong></p>';
+        html += '<p>✅ No subscription, no account needed, no hidden costs!</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 14: YES/NO RESPONSES
+    // =====================================================
+    
+    if (lowerMsg.match(/^(yes|yeah|yep|ndiyo|sawa|ok|okay|sure)\b/)) {
+        html = '<p><strong>Poa! What would you like to know?</strong></p>';
+        html += '<ul>';
+        html += '<li>🌱 "What can I plant now?"</li>';
+        html += '<li>🐄 "Tell me about chickens"</li>';
+        html += '<li>🐛 "How to treat aphids?"</li>';
+        html += '</ul>';
+        return html;
+    }
+    
+    if (lowerMsg.match(/^(no|nope|hapana)\b/)) {
+        html = '<p><strong>Hakuna shida! 👍</strong></p>';
+        html += '<p>I\'m here whenever you need help!</p>';
+        return html;
+    }
+    
+    // =====================================================
+    // STEP 15: GENERAL KEYWORD MATCHING (last resort)
+    // =====================================================
+    
+    // General crops keyword
+    if (lowerMsg.match(/\b(crop|crops|vegetable|vegetables|shamba|farm|farming)\b/)) {
+        html = '<p><strong>🌱 Crops in AgriXen</strong></p>';
+        html += '<p><strong>Cereals:</strong> Maize, Rice, Sorghum, Millet</p>';
+        html += '<p><strong>Vegetables:</strong> Tomatoes, Kale, Cabbage, Spinach, Onions, Carrots</p>';
+        html += '<p><strong>Roots:</strong> Potatoes, Sweet Potatoes, Cassava</p>';
+        html += '<p><strong>Fruits:</strong> Bananas, Mangoes, Avocados, Watermelon</p>';
+        html += '<p><strong>Cash:</strong> Coffee, Tea, Sugarcane</p>';
+        html += '<p><em>Ask about a specific crop! "Tell me about tomatoes"</em></p>';
+        return html;
+    }
+    
+    // General livestock keyword
+    if (lowerMsg.match(/\b(livestock|animal|animals)\b/)) {
+        html = '<p><strong>🐄 Livestock in AgriXen</strong></p>';
+        html += '<p>Dairy Cattle, Beef Cattle, Goats, Poultry, Sheep, Pigs, Rabbits, Fish</p>';
+        html += '<p><em>Ask about a specific animal! "Tell me about goats"</em></p>';
+        return html;
+    }
+    
+    // General pest/disease keyword
+    if (lowerMsg.match(/\b(pest|pests|disease|diseases|sick|infection)\b/)) {
+        html = '<p><strong>🐛 Pests & Diseases</strong></p>';
+        html += '<p><strong>Crop:</strong> Armyworms, Aphids, Blight, Wilt, Tuta Absoluta</p>';
+        html += '<p><strong>Livestock:</strong> Newcastle, Mastitis, ASF, Coccidiosis, Ticks</p>';
+        html += '<p><em>Ask about a specific problem! "How to treat aphids?"</em></p>';
+        return html;
+    }
+    
+    // =====================================================
+    // FALLBACK
+    // =====================================================
+    
+    html = '<p><strong>I heard your question! 🤔</strong></p>';
+    html += '<p>You asked: <em>"' + message + '"</em></p>';
+    html += '<p>I\'m still learning! For help:</p>';
+    html += '<ul>';
+    html += '<li>📧 labs@mortappsstudios.com</li>';
+    html += '<li>📧 agrixen.ke@gmail.com</li>';
+    html += '<li>📱 +254 113 400 063</li>';
+    html += '</ul>';
+    html += '<p>Or ask about: crops, livestock, pests, diseases, weather, market</p>';
     
     return html;
 }
-
 // ★★★ END OF LOCAL RESPONSE ENGINE - EXPAND ABOVE ★★★
+
+
+
+
+
 
 // =====================================================
 // MARKETPLACE - BUY/SELL FORMS
@@ -1974,6 +2914,14 @@ function setupEventListeners() {
     document.getElementById('vetCountyFilter').addEventListener('change', renderVets);
     document.getElementById('vetSpecialtyFilter').addEventListener('change', renderVets);
     
+    // Vet Register button - INSTANT response
+    var vetRegisterBtn = document.getElementById('vetRegisterBtn');
+    if (vetRegisterBtn) {
+        vetRegisterBtn.addEventListener('click', function() {
+            showVetRegister();
+        });
+    }
+    
     // Crop detail modal
     var closeCropModal = document.getElementById('closeCropDetailModal');
     if (closeCropModal) {
@@ -2019,12 +2967,13 @@ function setupEventListeners() {
     // Calculator
     document.getElementById('calculateBtn').addEventListener('click', calculateProfit);
     
-    // Footer buttons
+    // Footer buttons - INSTANT response (no delays)
     document.getElementById('footerContact').addEventListener('click', function() {
         window.location.href = 'mailto:labs@mortappsstudios.com';
     });
     
     document.getElementById('footerHelp').addEventListener('click', function() {
+        // INSTANT modal show - no setTimeout
         document.getElementById('barneGuideModal').classList.remove('hidden');
     });
     
@@ -2043,11 +2992,13 @@ function setupEventListeners() {
             document.getElementById('notificationModal').classList.add('hidden');
             document.getElementById('barneGuideModal').classList.add('hidden');
             document.getElementById('installModal').classList.add('hidden');
+            document.getElementById('vetRegisterModal').classList.add('hidden');
+            document.getElementById('vetRegisterSuccessModal').classList.add('hidden');
         }
     });
     
-    // Close modals on background click
-    var modals = ['locationModal', 'cropDetailModal', 'buyFormModal', 'sellFormModal', 'thankYouModal', 'notificationModal', 'barneGuideModal', 'installModal'];
+    // Close modals on background click - INSTANT
+    var modals = ['locationModal', 'cropDetailModal', 'buyFormModal', 'sellFormModal', 'thankYouModal', 'notificationModal', 'barneGuideModal', 'installModal', 'vetRegisterModal', 'vetRegisterSuccessModal'];
     modals.forEach(function(modalId) {
         var modal = document.getElementById(modalId);
         if (modal) {
@@ -2082,7 +3033,10 @@ function toast(msg) {
 // =====================================================
 // IMAGE PROTECTION - BLOCK RIGHT-CLICK, LONG PRESS, DOWNLOAD
 // Protects farmer and harvest images from being copied
+// Toast only shows ONCE per session
 // =====================================================
+
+var imageProtectionToastShown = false; // Session-level flag
 
 function applyImageProtection() {
     // Get all protected images
@@ -2093,16 +3047,25 @@ function applyImageProtection() {
         img.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            toast('Image protected');
+            // Only show toast once per session
+            if (!imageProtectionToastShown) {
+                toast('Images are protected');
+                imageProtectionToastShown = true;
+            }
             return false;
         });
         
         // Block long press (touch devices)
         img.addEventListener('touchstart', function(e) {
             // Set a timer for long press detection
+            var self = this;
             this.longPressTimer = setTimeout(function() {
                 e.preventDefault();
-                toast('Image protected');
+                // Only show toast once per session
+                if (!imageProtectionToastShown) {
+                    toast('Images are protected');
+                    imageProtectionToastShown = true;
+                }
             }, 500);
         }, { passive: false });
         
@@ -2140,7 +3103,11 @@ function applyImageProtection() {
     harvestContainers.forEach(function(container) {
         container.addEventListener('contextmenu', function(e) {
             e.preventDefault();
-            toast('Image protected');
+            // Only show toast once per session
+            if (!imageProtectionToastShown) {
+                toast('Images are protected');
+                imageProtectionToastShown = true;
+            }
             return false;
         });
     });
