@@ -597,26 +597,33 @@ function shouldShowInstallPrompt() {
 /**
  * Check if app is installed using multiple detection methods
  * Returns true if any method detects installation
+ * IMPORTANT: Only trust REAL detection methods, not just localStorage
  */
 function isAppInstalled() {
-    // Method 1: Check localStorage flag (set when user installs)
-    if (localStorage.getItem('agrixen_installed')) {
-        return true;
-    }
-    
-    // Method 2: Check if running in standalone mode (PWA launched from home screen)
+    // Method 1: Check if running in standalone mode (PWA launched from home screen)
+    // This is the MOST RELIABLE method - user is actively using the installed app
     if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
         return true;
     }
     
-    // Method 3: iOS Safari standalone check
+    // Method 2: iOS Safari standalone check
     if (window.navigator && window.navigator.standalone === true) {
         return true;
     }
     
-    // Method 4: Android TWA check
+    // Method 3: Android TWA check
     if (document.referrer && document.referrer.startsWith('android-app://')) {
         return true;
+    }
+    
+    // Method 4: Check localStorage flag - BUT verify it's not stale
+    // If localStorage says installed but we're NOT in standalone mode,
+    // the user probably uninstalled - clear the stale flag
+    if (localStorage.getItem('agrixen_installed')) {
+        // We have a stored flag but not running in standalone
+        // This means the app was likely uninstalled - clear the stale flag
+        localStorage.removeItem('agrixen_installed');
+        console.log('[AgriXen] Cleared stale installed flag - app was likely uninstalled');
     }
     
     return false;
@@ -625,13 +632,14 @@ function isAppInstalled() {
 /**
  * Update the Install button if app is already installed
  * Changes text to "Installed" and updates styling
+ * Shows "Install" button if not installed
  */
 function checkAndUpdateInstallButton() {
     var footerInstall = document.getElementById('footerInstall');
     if (!footerInstall) return;
     
     if (isAppInstalled()) {
-        // Update button text
+        // Update button text to "Installed"
         footerInstall.innerHTML = '\
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>\
@@ -641,9 +649,18 @@ function checkAndUpdateInstallButton() {
         
         // Add installed class for styling
         footerInstall.classList.add('installed');
+    } else {
+        // Reset button to "Install" state
+        footerInstall.innerHTML = '\
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>\
+                <polyline points="7 10 12 15 17 10"/>\
+                <line x1="12" y1="15" x2="12" y2="3"/>\
+            </svg>\
+            Install';
         
-        // Store in localStorage for future visits
-        localStorage.setItem('agrixen_installed', 'true');
+        // Remove installed class
+        footerInstall.classList.remove('installed');
     }
 }
 
