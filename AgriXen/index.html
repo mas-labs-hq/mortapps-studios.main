@@ -54,6 +54,20 @@
         .community-join-btn svg {
             flex-shrink: 0;
         }
+        
+        /* Install button - installed state */
+        .footer-btn.installed {
+            background: #D1FAE5 !important;
+            color: #059669 !important;
+            cursor: default !important;
+        }
+        .footer-btn.installed:hover {
+            transform: none !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        }
+        .footer-btn.installed svg {
+            color: #10B981;
+        }
     </style>
 
     <!-- Code Protection -->
@@ -907,6 +921,8 @@
             <p class="footer-tagline">Open Source &#8226; Free Forever &#8226; No Account Needed</p>
             <p class="footer-brand">AgriXen &#8226; AI Smart Farming</p>
             <a href="https://www.mortappsstudios.com" target="_blank" class="footer-powered">Powered By MortApps Studios</a>
+            
+            <!-- Footer Buttons: Contact, Help, Install -->
             <div class="footer-buttons">
                 <button id="footerContact" class="footer-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -923,10 +939,22 @@
                     </svg>
                     Help
                 </button>
+                <button id="footerInstall" class="footer-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Install
+                </button>
             </div>
         </footer>
     </div>
 
+    <!-- Barn-E AI Response Engine (load BEFORE app.js) -->
+    <script src="barn-e.js"></script>
+    
+    <!-- Main Application -->
     <script src="app.js"></script>
     
     <!-- Service Worker Registration for PWA -->
