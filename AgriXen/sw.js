@@ -1,6 +1,6 @@
 /**
  * AgriXen Service Worker
- * Version: 3.6.0 - Auto-Refresh Enabled
+ * Version: 3.8.1 - Fixed Barn-E blank response issue
  * 
  * HOW UPDATES WORK:
  * 1. Change CACHE_VERSION below when you update any file
@@ -20,7 +20,7 @@
 // ============================================
 // CHANGE THIS VERSION WHEN YOU UPDATE THE APP
 // ============================================
-var CACHE_VERSION = '3.6.0';
+var CACHE_VERSION = '3.10.0';
 var CACHE_NAME = 'agrixen-v' + CACHE_VERSION;
 
 // Files to cache for offline use
@@ -29,6 +29,7 @@ var STATIC_ASSETS = [
     './index.html',
     './styles.css',
     './app.js',
+    './barn-e.js',
     './manifest.json',
     './wide-screenshot.png'
 ];
