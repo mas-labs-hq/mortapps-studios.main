@@ -12,7 +12,9 @@
 // Duration options: '5s' (5 sec), '10s' (10 sec), '1m' (1 min), '2m' (2 min)
 var SLOT_ADS = [
     { image: 'ad-images/lmh-ad-slot.png', url: 'https://www.linkagemediahub.co.ke', alt: 'Linkage Media Hub', duration: '5s' },
-    { image: 'ad-images/manji-ad-slot.png', url: 'https://manji.co.ke', alt: 'Manji Biscuits', duration: '10s' }
+    { image: 'ad-images/arm-ad-slot.png', url: 'https://www.arimis-milkingjelly.com', alt: 'arimis', duration: '5s' },
+    { image: 'ad-images/mas-ad-slot.png', url: 'https://www.mortappsstudios.com', alt: 'MortApps Studios', duration: '10s' },
+    { image: 'ad-images/pep-ad-slot.png', url: 'https://www.pepsodent.com/gh/home.html', alt: 'Pepsodent', duration: '5s' }
 ];
 
 // Ad rotation state - independent for each slot with no-repeat logic
