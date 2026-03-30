@@ -384,10 +384,12 @@ function init() {
 var weatherRefreshInterval = null;
 var swUpdateCheckInterval = null;
 var lastWeatherRefresh = null;
+var appLastVisible = Date.now(); // Track when app was last visible
 
 function initAutoRefresh() {
     // Store initial time
     lastWeatherRefresh = Date.now();
+    appLastVisible = Date.now();
     
     // =====================================================
     // 1. WEATHER AUTO-REFRESH - EVERY 1 HOUR
@@ -400,22 +402,36 @@ function initAutoRefresh() {
         }
     }, 3600000); // 1 hour = 3600000ms
     
-    // Also refresh when app comes back to focus after 30+ minutes
+    // =====================================================
+    // 2. "WHILE YOU WERE AWAY" - MOBILE PWA WORKAROUND
+    // Since mobile PWAs don't run JS in background, we show
+    // a "welcome back" notification when user returns
+    // =====================================================
     document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && currentLocation) {
-            var timeSinceRefresh = Date.now() - lastWeatherRefresh;
-            var thirtyMinutes = 30 * 60 * 1000;
+        if (document.hidden) {
+            // App going to background - record time
+            appLastVisible = Date.now();
+        } else {
+            // App becoming visible again
+            var timeAway = Date.now() - appLastVisible;
+            var fiveMinutes = 5 * 60 * 1000;
             
-            if (timeSinceRefresh >= thirtyMinutes) {
+            // Refresh weather if away 30+ minutes
+            if (currentLocation && timeAway >= (30 * 60 * 1000)) {
                 console.log('[AgriXen] App focused after 30+ min, refreshing weather...');
                 loadWeather(currentLocation.lat, currentLocation.lon);
                 lastWeatherRefresh = Date.now();
+            }
+            
+            // Show "while you were away" notification if away 5+ minutes
+            if (timeAway >= fiveMinutes) {
+                showWelcomeBackNotification(timeAway);
             }
         }
     });
     
     // =====================================================
-    // 2. PWA UPDATE CHECK - EVERY 1 HOUR
+    // 3. PWA UPDATE CHECK - EVERY 1 HOUR
     // =====================================================
     if ('serviceWorker' in navigator) {
         // Check for SW updates every 1 hour
@@ -2217,6 +2233,50 @@ function requestNotificationPermission(callback) {
 }
 
 /**
+ * Show "Welcome Back" notification when user returns to app
+ * Works around mobile PWA limitation (no background JS)
+ * Shows after 5+ minutes away
+ */
+function showWelcomeBackNotification(timeAway) {
+    var minutes = Math.floor(timeAway / 60000);
+    var hours = Math.floor(minutes / 60);
+    
+    var timeText;
+    if (hours >= 1) {
+        timeText = hours + ' hour' + (hours > 1 ? 's' : '');
+    } else {
+        timeText = minutes + ' minute' + (minutes > 1 ? 's' : '');
+    }
+    
+    // Get random activity to show
+    var activities = ACTIVITY_STATEMENTS.filter(function(a) { return a.type === 'sell'; });
+    var randomActivity = activities[Math.floor(Math.random() * activities.length)];
+    
+    // Create welcome back toast
+    var toast = document.createElement('div');
+    toast.className = 'welcome-back-toast';
+    toast.innerHTML = 
+        '<div class="welcome-back-header">👋 Welcome back!</div>' +
+        '<div class="welcome-back-text">You were away for ' + timeText + '</div>' +
+        '<div class="welcome-back-activity">📦 ' + (randomActivity ? randomActivity.text.substring(0, 60) + '...' : 'New farming activity while you were gone!') + '</div>';
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(function() {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Remove after 6 seconds
+    setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() {
+            toast.remove();
+        }, 400);
+    }, 6000);
+}
+
+/**
  * Get deterministic "farmers online" count
  * Same number for everyone at the same time
  * Range: 15-45 farmers based on time of day
@@ -2225,6 +2285,7 @@ function getFarmersOnlineCount() {
     var now = new Date();
     var hour = now.getHours();
     var minute = now.getMinutes();
+    var second = now.getSeconds();
     
     // Base the count on time of day (more during farming hours)
     var baseCount;
@@ -2248,45 +2309,50 @@ function getFarmersOnlineCount() {
         baseCount = 18;
     }
     
-    // Add slight variation based on minute (deterministic)
-    var variation = Math.floor((minute / 60) * 5);
+    // Add variation based on minute AND second for more dynamic changes
+    // This makes the number change every time the popup appears
+    var minuteVariation = Math.floor((minute / 60) * 5);
+    var secondVariation = Math.floor((second / 60) * 3);
     
-    return baseCount + variation;
+    // Add deterministic "randomness" based on current time
+    var timeSeed = (hour * 3600 + minute * 60 + second);
+    var pseudoRandom = Math.floor((Math.sin(timeSeed) + 1) * 3); // 0-6 range
+    
+    return baseCount + minuteVariation + secondVariation + pseudoRandom;
 }
 
 /**
  * Show farmers online pop-up
- * Appears after 200 seconds, disappears after 5 seconds
+ * Appears after 60 seconds, disappears after 5 seconds
+ * Then repeats every 90 seconds
  */
 var farmersOnlineTimer = null;
 var farmersOnlineShown = false;
 
 function initFarmersOnlinePopup() {
-    // Show first popup after 200 seconds
+    // Show first popup after 60 seconds
     if (farmersOnlineShown) return;
     
     farmersOnlineTimer = setTimeout(function() {
         showFarmersOnlineToast();
         farmersOnlineShown = true;
         
-        // After first appearance, show again every 20-30 seconds (random)
+        // After first appearance, show again every 90 seconds
         scheduleNextFarmersOnlinePopup();
-    }, 200000); // 200 seconds = ~3.3 minutes
+    }, 60000); // 60 seconds = 1 minute
 }
 
 /**
  * Schedule the next farmers online popup
- * Random interval between 20-30 seconds
+ * Every 90 seconds
  */
 function scheduleNextFarmersOnlinePopup() {
-    // Random delay between 20-30 seconds
-    var randomDelay = 20000 + Math.floor(Math.random() * 10000);
-    
+    // Fixed delay of 90 seconds
     setTimeout(function() {
         showFarmersOnlineToast();
         // Schedule the next one
         scheduleNextFarmersOnlinePopup();
-    }, randomDelay);
+    }, 90000); // 90 seconds
 }
 
 function showFarmersOnlineToast() {
