@@ -1,6 +1,6 @@
 /**
  * AgriXen Service Worker
- * Version: 3.8.1 - Fixed Barn-E blank response issue
+ * Version: 3.14.0 - WhatsApp-style read receipts: Blue ticks, PWA notifications
  * 
  * HOW UPDATES WORK:
  * 1. Change CACHE_VERSION below when you update any file
@@ -20,7 +20,7 @@
 // ============================================
 // CHANGE THIS VERSION WHEN YOU UPDATE THE APP
 // ============================================
-var CACHE_VERSION = '3.11.0';
+var CACHE_VERSION = '3.14.0';
 var CACHE_NAME = 'agrixen-v' + CACHE_VERSION;
 
 // Files to cache for offline use
