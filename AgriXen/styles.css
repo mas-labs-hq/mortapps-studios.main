@@ -3307,6 +3307,54 @@ body.dark-mode .farmers-week-placeholder { border-color: var(--border); }
 }
 
 /* =====================================================
+   WELCOME BACK TOAST - Mobile PWA Background Workaround
+   ===================================================== */
+.welcome-back-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(145deg, #10B981, #059669);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    box-shadow:
+        0 6px 20px rgba(16, 185, 129, 0.4),
+        0 10px 40px rgba(5, 150, 105, 0.3);
+    z-index: 9999;
+    opacity: 0;
+    max-width: 90%;
+    width: 320px;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease-out;
+}
+
+.welcome-back-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.welcome-back-header {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.welcome-back-text {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-back-activity {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+/* =====================================================
    ACTIVITY MESSAGE STYLES
    ===================================================== */
 .activity-message {
