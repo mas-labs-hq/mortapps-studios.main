@@ -12,6 +12,7 @@
 // Duration options: '5s' (5 sec), '10s' (10 sec), '1m' (1 min), '2m' (2 min)
 var SLOT_ADS = [
     { image: 'ad-images/lmh-ad-slot.png', url: 'https://www.linkagemediahub.co.ke', alt: 'Linkage Media Hub', duration: '5s' },
+    { image: 'ad-images/manji-ad-slot.png', url: 'https://manji.co.ke', alt: 'Manji Biscuits', duration: '10s' },
     { image: 'ad-images/arm-ad-slot.png', url: 'https://www.arimis-milkingjelly.com', alt: 'arimis', duration: '5s' },
     { image: 'ad-images/mas-ad-slot.png', url: 'https://www.mortappsstudios.com', alt: 'MortApps Studios', duration: '10s' },
     { image: 'ad-images/pep-ad-slot.png', url: 'https://www.pepsodent.com/gh/home.html', alt: 'Pepsodent', duration: '5s' }
@@ -35,28 +36,63 @@ var VET_CONTACTS = [
     { name: 'Directorate of Veterinary Services', county: 'Nairobi', specialty: 'mixed', phone: '0202718870' },
     // ADD MORE VETS BELOW - Copy the format above
 
-    //{ name: 'Dr. Wanjiku Animal Clinic', county: 'Kiambu', specialty: 'cattle', phone: '0722123456' },
-    //{ name: 'Nakuru Vet Centre', county: 'Nakuru', specialty: 'mixed', phone: '0733987654' },
-    // { name: 'Eldoret Poultry Specialists', county: 'Uasin Gishu', specialty: 'poultry', phone: '0755678901' } 
+   // { name: 'Dr. Wanjiku Animal Clinic', county: 'Kiambu', specialty: 'cattle', phone: '0722123456' },
+   // { name: 'Nakuru Vet Centre', county: 'Nakuru', specialty: 'mixed', phone: '0733987654' },
+   // { name: 'Eldoret Poultry Specialists', county: 'Uasin Gishu', specialty: 'poultry', phone: '0755678901' }
     // Continue adding more...
 ];
 
 // =====================================================
 // COMMUNITY MESSAGES - EASY TO EDIT
-// Add new messages here. Format:
-// { name: "Sender Name", text: "Your message here", time: "Time stamp" }
-// To add more: copy a line below and change the details
-// To remove: delete the line
+// Format: { name: "Sender Name", text: "Your message", image: "com-images/filename.jpg", time: "Time" }
+// - image field is OPTIONAL - leave empty or omit for text-only messages
+// - Put images in the 'com-images/' folder
+// - Images will display below the message text
 // =====================================================
 var COMMUNITY_MESSAGES = [
     { 
         name: "AgriXen Team",
         text: "Jambo! Karibu AgriXen Community. We're here to support your farming journey with crop tips, livestock advice, and market updates. Stay connected by joining our community above—click 'Join Us' to receive exclusive farming insights and seasonal alerts!",
         time: "Today"
-    }
-    // ADD MORE MESSAGES BELOW - Copy format:
-    // { name: "Sender Name", text: "Your message here", time: "Time stamp" },
+    },
+    // ADD MORE MESSAGES BELOW - Examples:
+    // { name: "AgriXen Team", text: "⚠️ Watch out for Fall Armyworm this season!", image: "com-images/armyworm.jpg", time: "Yesterday" },
+    // { name: "AgriXen Team", text: "This is what maize lethal necrosis looks like on your crops.", image: "com-images/mln.jpg", time: "2 days ago" },
 ];
+
+// =====================================================
+// ACTIVITY STATEMENTS - Auto-generated "live" activity
+// These appear alongside community messages from "Sales"
+// Format: { text: "Activity message", type: "buy" or "sell", maxAge: minutes }
+// - type: 'buy' = looking to buy, 'sell' = just sold
+// - maxAge: how long this statement stays visible (15-30 minutes)
+// =====================================================
+var ACTIVITY_STATEMENTS = [
+    // BUY ACTIVITIES (farmers looking to buy)
+    { text: "A farmer in Nakuru is looking for 100kg of maize. Check the Buy section!", type: "buy", maxAge: 20 },
+    { text: "Someone in Kiambu needs 50kg of kales urgently. Head to Buy section!", type: "buy", maxAge: 25 },
+    { text: "Buyer in Meru seeking 200kg of potatoes. See Buy section!", type: "buy", maxAge: 30 },
+    { text: "A farmer in Nyeri wants 30kg of tomatoes. Check Buy section now!", type: "buy", maxAge: 15 },
+    { text: "Looking for 500kg of beans in Bungoma. Visit Buy section!", type: "buy", maxAge: 20 },
+    { text: "Urgent: Buyer in Kisumu needs 80kg of onions. Check Buy section!", type: "buy", maxAge: 25 },
+    
+    // SELL ACTIVITIES (farmers who just sold)
+    { text: "Mwangi just sold 150kg of tomatoes using AgriXen. Try Sell section!", type: "sell", maxAge: 20 },
+    { text: "Wanjiku sold 80kg of kales yesterday. List your produce in Sell section!", type: "sell", maxAge: 25 },
+    { text: "A farmer in Murang'a just sold 200kg of maize. Use Sell section!", type: "sell", maxAge: 30 },
+    { text: "Ochieng sold 50kg of beans via AgriXen. Try the Sell section!", type: "sell", maxAge: 15 },
+    { text: "Another farmer just sold 300kg of potatoes. List yours in Sell section!", type: "sell", maxAge: 20 },
+    { text: "Akinyi sold 40kg of spinach today. Use Sell section to reach buyers!", type: "sell", maxAge: 25 },
+    { text: "A farmer in Kakamega just sold 100kg of sugarcane. Try Sell section!", type: "sell", maxAge: 20 },
+    { text: "Kipchoge sold 250kg of wheat yesterday. List in Sell section!", type: "sell", maxAge: 30 },
+];
+
+// Activity state - tracks which activities are currently shown
+var currentActivityStatements = [];
+var activityLastRefresh = null;
+var activityCycleIndex = 0; // Track which activity to show next
+var activityCycleTimer = null; // Timer for cycling activities
+var visibleActivityCount = 0; // How many activities currently visible
 
 // =====================================================
 // FARMERS OF THE WEEK - EASY TO EDIT
@@ -71,11 +107,14 @@ var COMMUNITY_MESSAGES = [
 // =====================================================
 var FARMERS_OF_THE_WEEK = [
     // ========== EXAMPLE FARMERS - REPLACE WITH YOUR OWN ==========
-    // Format: { name: "Farmer Name", profilePic: "farmers-pic/filename.jpg", harvest1: "harvest-pic/image1.jpg", harvest1Name: "Produce Name", harvest2: "harvest-pic/image2.jpg", harvest2Name: "Produce Name" }
+    // Format: { name: "Farmer Name", profilePic: "farmers-pic/file.jpg", story: "2-sentence story", harvest1: "harvest-pic/file.jpg", harvest1Name: "Produce", harvest2: "harvest-pic/file.jpg", harvest2Name: "Produce" }
+    // - story: Brief narrative about the farmer (2 sentences max)
+    // 
     // Rank 1 - Best Farmer
     { 
         name: "Jane Wangari", 
         profilePic: "farmers-pic/jane.wangari.jpg", 
+        story: "Growing sukuma wiki and beans in Kajiado for 4 years. This week she harvested 160kg of fresh produce!",
         harvest1: "harvest-pic/jane-spinach.jpg",
         harvest1Name: "spinach",
         harvest2: "harvest-pic/jane-beans.jpg",
@@ -85,6 +124,7 @@ var FARMERS_OF_THE_WEEK = [
     { 
         name: "Mary Wanjiku", 
         profilePic: "https://images.pexels.com/photos/27205295/pexels-photo-27205295.jpeg", 
+        story: "Third-generation tea farmer from Nyeri with 15 acres under cultivation. Her farm produces some of the finest purple leaf tea in the region!",
         harvest1: "https://images.pexels.com/photos/6136356/pexels-photo-6136356.jpeg",
         harvest1Name: "Tea",
         harvest2: "https://images.pexels.com/photos/6870859/pexels-photo-6870859.jpeg",
@@ -94,15 +134,16 @@ var FARMERS_OF_THE_WEEK = [
     { 
         name: "Peter Ochieng", 
         profilePic: "https://images.pexels.com/photos/11053957/pexels-photo-11053957.jpeg", 
+        story: "Specializes in drought-resistant sorghum in Homa Bay. Recently expanded to 10 acres with help from his three brothers!",
         harvest1: "https://images.pexels.com/photos/17164919/pexels-photo-17164919.jpeg",
         harvest1Name: "Sorghum",
         harvest2: "https://images.pexels.com/photos/4430323/pexels-photo-4430323.jpeg",
-        harvest2Name: "Goat Hearding"
+        harvest2Name: "Goat Herding"
     }
     // ============================================================
-    // TO UPDATE: Simply replace the names and image paths above
+    // TO UPDATE: Simply replace the names, stories, and image paths above
     // Make sure images exist in the correct folders
-    // Add harvest1Name and harvest2Name for each harvest image
+    // Add a compelling 2-sentence story for each farmer
     // ============================================================
 ];
 
@@ -324,6 +365,8 @@ function init() {
     initPWAInstall();
     initVetRegisterForm();
     initAutoRefresh(); // Auto-refresh weather and check for PWA updates
+    initFarmersOnlinePopup(); // Show farmers online pop-up after 200 seconds
+    initActivityCycle(); // Staggered activity display (one at a time)
     
     setTimeout(hideLoadingScreen, 1500);
 }
@@ -1840,8 +1883,432 @@ function handleFormSubmit(form, modalId) {
 }
 
 // =====================================================
-// COMMUNITY MESSAGES
+// COMMUNITY MESSAGES - With Images & Activity Statements
 // =====================================================
+
+/**
+ * Get current activity statements (auto-generated, time-based)
+ * Returns max 4 statements that haven't expired
+ */
+function getCurrentActivityStatements() {
+    var now = Date.now();
+    
+    // Refresh the pool every 15-30 minutes (deterministic based on time)
+    var refreshInterval = 15 * 60 * 1000; // 15 minutes
+    if (!activityLastRefresh || (now - activityLastRefresh) > refreshInterval) {
+        // Shuffle the activity pool
+        currentActivityStatements = ACTIVITY_STATEMENTS.slice().sort(function() { return 0.5 - Math.random(); });
+        activityLastRefresh = now;
+        activityCycleIndex = 0;
+        visibleActivityCount = 0;
+    }
+    
+    // Return 1-2 activities at a time (randomly determined but deterministic)
+    // Use time-based seed for determinism (same for all users at same time)
+    var minutes = new Date().getMinutes();
+    var maxVisible = (minutes % 3 === 0) ? 2 : 1; // Every 3rd minute shows 2 activities
+    
+    // Select activities based on current cycle index
+    var result = [];
+    for (var i = 0; i < maxVisible && activityCycleIndex < currentActivityStatements.length; i++) {
+        result.push(currentActivityStatements[activityCycleIndex]);
+        activityCycleIndex++;
+    }
+    
+    // Reset cycle if we've gone through all activities
+    if (activityCycleIndex >= currentActivityStatements.length) {
+        // Re-shuffle for next cycle
+        currentActivityStatements = ACTIVITY_STATEMENTS.slice().sort(function() { return 0.5 - Math.random(); });
+        activityCycleIndex = 0;
+    }
+    
+    return result;
+}
+
+/**
+ * Get a single activity statement for staggered display
+ * Called periodically to add new activities one at a time
+ */
+function getNextActivityStatement() {
+    // Refresh the pool if needed
+    var now = Date.now();
+    var refreshInterval = 15 * 60 * 1000; // 15 minutes
+    
+    if (!activityLastRefresh || (now - activityLastRefresh) > refreshInterval) {
+        currentActivityStatements = ACTIVITY_STATEMENTS.slice().sort(function() { return 0.5 - Math.random(); });
+        activityLastRefresh = now;
+        activityCycleIndex = 0;
+    }
+    
+    // Get next activity
+    if (activityCycleIndex >= currentActivityStatements.length) {
+        // Re-shuffle
+        currentActivityStatements = ACTIVITY_STATEMENTS.slice().sort(function() { return 0.5 - Math.random(); });
+        activityCycleIndex = 0;
+    }
+    
+    var activity = currentActivityStatements[activityCycleIndex];
+    activityCycleIndex++;
+    
+    return activity;
+}
+
+/**
+ * Initialize staggered activity display
+ * Shows activities one at a time with delays
+ */
+function initActivityCycle() {
+    // Clear any existing timer
+    if (activityCycleTimer) {
+        clearInterval(activityCycleTimer);
+    }
+    
+    // Show first activity after 30 seconds
+    setTimeout(function() {
+        addActivityToDisplay();
+        
+        // Then add new activities every 2-4 minutes (random but deterministic)
+        activityCycleTimer = setInterval(function() {
+            // Only add if we have less than 3 visible
+            if (visibleActivityCount < 3) {
+                addActivityToDisplay();
+            }
+        }, 180000); // Every 3 minutes
+    }, 30000); // Initial 30 second delay
+}
+
+/**
+ * Add a single activity to the display
+ */
+function addActivityToDisplay() {
+    var activity = getNextActivityStatement();
+    if (!activity) return;
+    
+    var container = document.getElementById('communityMessages');
+    if (!container) return;
+    
+    // Generate unique ID for this activity
+    var activityId = 'activity_' + Date.now() + '_' + simpleHash(activity.text);
+    
+    // Check if already read (shouldn't happen for new activities, but just in case)
+    var readMessages = getReadMessages();
+    var isRead = readMessages.indexOf(activityId) !== -1;
+    var tickClass = isRead ? 'read' : 'unread';
+    var timeClass = isRead ? 'community-message-time activity-time read' : 'community-message-time activity-time';
+    
+    // Create activity element
+    var activityEl = document.createElement('div');
+    activityEl.className = 'community-message activity-message activity-' + activity.type;
+    activityEl.setAttribute('data-activity', 'true');
+    activityEl.setAttribute('data-message-id', activityId);
+    
+    var icon = activity.type === 'buy' ? 
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>' :
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+    
+    activityEl.innerHTML = 
+        '<div class="community-message-avatar activity-avatar">' + icon + '</div>' +
+        '<div class="community-message-content">' +
+        '<span class="community-message-name">Sales</span>' +
+        '<p>' + activity.text + '</p>' +
+        '<span class="' + timeClass + '">Just now <span class="message-ticks ' + tickClass + '">✓✓</span></span>' +
+        '</div>';
+    
+    // Insert AFTER all manual messages (manual messages stay at top)
+    // Find last manual message and insert after it
+    var manualMessages = container.querySelectorAll('.community-message:not([data-activity])');
+    var lastManual = manualMessages.length > 0 ? manualMessages[manualMessages.length - 1] : null;
+    
+    if (lastManual) {
+        // Insert after the last manual message
+        if (lastManual.nextSibling) {
+            container.insertBefore(activityEl, lastManual.nextSibling);
+        } else {
+            container.appendChild(activityEl);
+        }
+    } else {
+        // No manual messages, just append
+        container.appendChild(activityEl);
+    }
+    
+    visibleActivityCount++;
+    
+    // Send notification for new activity (PWA users)
+    notifyNewActivity(activity);
+    
+    // Remove activity after its lifespan (15-30 minutes)
+    var lifespan = (activity.maxAge || 20) * 60 * 1000;
+    setTimeout(function() {
+        if (activityEl && activityEl.parentNode) {
+            activityEl.style.opacity = '0';
+            activityEl.style.transform = 'translateX(-20px)';
+            setTimeout(function() {
+                activityEl.remove();
+                visibleActivityCount = Math.max(0, visibleActivityCount - 1);
+            }, 300);
+        }
+    }, lifespan);
+}
+
+// =====================================================
+// WHATSAPP-STYLE READ RECEIPTS
+// =====================================================
+
+/**
+ * Simple hash function for creating message IDs
+ */
+function simpleHash(str) {
+    var hash = 0;
+    if (str.length === 0) return hash;
+    for (var i = 0; i < str.length; i++) {
+        var char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(36);
+}
+
+/**
+ * Get read message IDs from localStorage
+ */
+function getReadMessages() {
+    try {
+        var stored = localStorage.getItem('agrixen_read_messages');
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+/**
+ * Save read message IDs to localStorage
+ */
+function saveReadMessages(readMessages) {
+    try {
+        localStorage.setItem('agrixen_read_messages', JSON.stringify(readMessages));
+    } catch (e) {
+        console.log('[AgriXen] Could not save read messages:', e);
+    }
+}
+
+/**
+ * Mark all visible messages as read
+ * Called when user views the Community section
+ */
+function markMessagesAsRead() {
+    var readMessages = getReadMessages();
+    var hasNew = false;
+    
+    // Mark manual messages as read
+    var container = document.getElementById('communityMessages');
+    if (!container) return;
+    
+    var messages = container.querySelectorAll('.community-message');
+    
+    messages.forEach(function(msgEl) {
+        var msgId = msgEl.getAttribute('data-message-id');
+        if (msgId && readMessages.indexOf(msgId) === -1) {
+            readMessages.push(msgId);
+            hasNew = true;
+            
+            // Update visual state to "read"
+            var ticks = msgEl.querySelector('.message-ticks');
+            var time = msgEl.querySelector('.community-message-time');
+            
+            if (ticks) {
+                ticks.classList.remove('unread');
+                ticks.classList.add('read');
+            }
+            if (time) {
+                time.classList.add('read');
+            }
+        }
+    });
+    
+    if (hasNew) {
+        saveReadMessages(readMessages);
+    }
+}
+
+/**
+ * Send PWA notification for new activity
+ * Only works if user has granted notification permission
+ */
+function notifyNewActivity(activity) {
+    // Check if notifications are supported and permitted
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    
+    // Don't spam notifications - only notify for sell activities (more exciting)
+    if (activity.type !== 'sell') return;
+    
+    // Check if app is in foreground (don't notify if user is looking at it)
+    if (document.visibilityState === 'visible') return;
+    
+    // Create notification
+    try {
+        var notification = new Notification('AgriXen Community', {
+            body: activity.text,
+            icon: 'icons/icon-192x192.png',
+            badge: 'icons/icon-72x72.png',
+            tag: 'agrixen-activity',
+            renotify: false,
+            silent: false
+        });
+        
+        // Close after 5 seconds
+        setTimeout(function() {
+            notification.close();
+        }, 5000);
+        
+        // Focus app when clicked
+        notification.onclick = function() {
+            window.focus();
+            notification.close();
+        };
+    } catch (e) {
+        console.log('[AgriXen] Could not show notification:', e);
+    }
+}
+
+/**
+ * Check and request notification permission
+ * Enhanced version for PWA notifications
+ */
+function checkNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('[AgriXen] Notifications not supported');
+        return;
+    }
+    
+    // If already granted, we're good
+    if (Notification.permission === 'granted') {
+        console.log('[AgriXen] Notification permission already granted');
+        return;
+    }
+    
+    // If denied, don't ask again
+    if (Notification.permission === 'denied') {
+        console.log('[AgriXen] Notification permission denied');
+        return;
+    }
+    
+    // Will ask later via the notification modal
+    console.log('[AgriXen] Will request notification permission later');
+}
+
+/**
+ * Request notification permission explicitly
+ * Called from the notification modal
+ */
+function requestNotificationPermission(callback) {
+    if (!('Notification' in window)) {
+        if (callback) callback(false);
+        return;
+    }
+    
+    Notification.requestPermission().then(function(permission) {
+        console.log('[AgriXen] Notification permission:', permission);
+        if (callback) callback(permission === 'granted');
+    }).catch(function(e) {
+        console.log('[AgriXen] Could not request permission:', e);
+        if (callback) callback(false);
+    });
+}
+
+/**
+ * Get deterministic "farmers online" count
+ * Same number for everyone at the same time
+ * Range: 15-45 farmers based on time of day
+ */
+function getFarmersOnlineCount() {
+    var now = new Date();
+    var hour = now.getHours();
+    var minute = now.getMinutes();
+    
+    // Base the count on time of day (more during farming hours)
+    var baseCount;
+    if (hour >= 5 && hour < 9) {
+        // Early morning - farmers checking weather
+        baseCount = 28;
+    } else if (hour >= 9 && hour < 12) {
+        // Morning peak
+        baseCount = 35;
+    } else if (hour >= 12 && hour < 14) {
+        // Lunch time
+        baseCount = 25;
+    } else if (hour >= 14 && hour < 18) {
+        // Afternoon peak
+        baseCount = 38;
+    } else if (hour >= 18 && hour < 21) {
+        // Evening
+        baseCount = 30;
+    } else {
+        // Night - fewer farmers
+        baseCount = 18;
+    }
+    
+    // Add slight variation based on minute (deterministic)
+    var variation = Math.floor((minute / 60) * 5);
+    
+    return baseCount + variation;
+}
+
+/**
+ * Show farmers online pop-up
+ * Appears after 200 seconds, disappears after 5 seconds
+ */
+var farmersOnlineTimer = null;
+var farmersOnlineShown = false;
+
+function initFarmersOnlinePopup() {
+    // Show first popup after 200 seconds
+    if (farmersOnlineShown) return;
+    
+    farmersOnlineTimer = setTimeout(function() {
+        showFarmersOnlineToast();
+        farmersOnlineShown = true;
+        
+        // After first appearance, show again every 20-30 seconds (random)
+        scheduleNextFarmersOnlinePopup();
+    }, 200000); // 200 seconds = ~3.3 minutes
+}
+
+/**
+ * Schedule the next farmers online popup
+ * Random interval between 20-30 seconds
+ */
+function scheduleNextFarmersOnlinePopup() {
+    // Random delay between 20-30 seconds
+    var randomDelay = 20000 + Math.floor(Math.random() * 10000);
+    
+    setTimeout(function() {
+        showFarmersOnlineToast();
+        // Schedule the next one
+        scheduleNextFarmersOnlinePopup();
+    }, randomDelay);
+}
+
+function showFarmersOnlineToast() {
+    var count = getFarmersOnlineCount();
+    var toast = document.createElement('div');
+    toast.className = 'farmers-online-toast';
+    toast.innerHTML = '<span class="online-dot"></span> <strong>' + count + '</strong> farmers are online right now';
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(function() {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Remove after 5 seconds
+    setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() {
+            toast.remove();
+        }, 300);
+    }, 5000);
+}
 
 function renderCommunityMessages() {
     var container = document.getElementById('communityMessages');
@@ -1849,10 +2316,23 @@ function renderCommunityMessages() {
     
     var html = '';
     
+    // Get read message IDs from localStorage
+    var readMessages = getReadMessages();
+    
+    // ONLY render manual messages initially
+    // Activity statements are added dynamically via initActivityCycle()
+    // This creates a staggered, natural appearance instead of all at once
+    
     for (var i = 0; i < COMMUNITY_MESSAGES.length; i++) {
         var msg = COMMUNITY_MESSAGES[i];
         
-        html += '<div class="community-message">';
+        // Generate unique ID for this message (based on name + text hash)
+        var msgId = 'msg_' + i + '_' + simpleHash(msg.text);
+        var isRead = readMessages.indexOf(msgId) !== -1;
+        var tickClass = isRead ? 'read' : 'unread';
+        var timeClass = isRead ? 'community-message-time read' : 'community-message-time';
+        
+        html += '<div class="community-message" data-message-id="' + msgId + '">';
         html += '<div class="community-message-avatar">';
         html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="20 2 15 22 11 13 2 9 20 2"/></svg>';
         html += '</div>';
@@ -1861,12 +2341,24 @@ function renderCommunityMessages() {
             html += '<span class="community-message-name">' + msg.name + '</span>';
         }
         html += '<p>' + msg.text + '</p>';
-        html += '<span class="community-message-time">' + msg.time + '</span>';
+        
+        // Add image if present
+        if (msg.image) {
+            html += '<div class="community-message-image">';
+            html += '<img src="' + msg.image + '" alt="Community image" loading="lazy" onerror="this.style.display=\'none\'">';
+            html += '</div>';
+        }
+        
+        // WhatsApp-style time with double ticks
+        html += '<span class="' + timeClass + '">' + msg.time + '<span class="message-ticks ' + tickClass + '">✓✓</span></span>';
         html += '</div>';
         html += '</div>';
     }
     
     container.innerHTML = html;
+    
+    // Mark messages as read when user views this section
+    markMessagesAsRead();
 }
 
 // =====================================================
@@ -1963,6 +2455,11 @@ function renderFarmersOfWeek() {
             html += '<img src="' + farmer.profilePic + '" alt="' + farmer.name + '" class="farmer-avatar protected-image" loading="lazy" onerror="this.src=\'icons/favicon-32x32.png\'">';
             html += '<span class="farmer-name">' + farmer.name + '</span>';
             html += '</div>';
+            
+            // Farmer story
+            if (farmer.story) {
+                html += '<p class="farmer-story">' + farmer.story + '</p>';
+            }
             
             // Harvest images - two side by side with produce names
             html += '<div class="farmer-harvests">';
@@ -2099,6 +2596,12 @@ function switchTab(tabName) {
     var activeContent = document.getElementById(tabName + 'Tab');
     if (activeContent) {
         activeContent.classList.remove('hidden');
+    }
+    
+    // Mark community messages as read when user views Market tab
+    if (tabName === 'market') {
+        // Small delay to ensure DOM is visible
+        setTimeout(markMessagesAsRead, 100);
     }
 }
 
