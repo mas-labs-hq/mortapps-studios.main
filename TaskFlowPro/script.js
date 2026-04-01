@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * TASKFLOW PRO - CORE LOGIC v3.2
+ * TASKFLOW PRO - CORE LOGIC v3.2.1
  * ============================================================================
  * Privacy-first • Local-only • PWA-enabled • Gamified • Auto-updating
  * By MortApps Studios
@@ -86,7 +86,7 @@ function showApp() {
 }
 
 // ============================================
-// 📱 PWA INSTALL - ROBUST VERSION
+// 📱 PWA INSTALL - FIXED FOR SUBDIRECTORY + RELIABLE DETECTION
 // ============================================
 function setupPWAInstall() {
     let deferredPrompt = null;
@@ -94,16 +94,25 @@ function setupPWAInstall() {
     const installText = document.getElementById('installText');
     const installModal = document.getElementById('installModal');
     
-    // Check if already installed
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = window.navigator.standalone === true;
+    // ============================================
+    // 🔍 RELIABLE INSTALL STATUS DETECTION
+    // ============================================
+    function checkInstallStatus() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isIOSStandalone = window.navigator.standalone === true;
+        const wasInstalled = localStorage.getItem('taskflow_installed') === 'true';
+        const noURLBar = window.innerHeight === window.screen.height;
+        return isStandalone || isIOSStandalone || wasInstalled || noURLBar;
+    }
     
-    function updateInstallButton(installed) {
+    function updateInstallButton() {
+        const installed = checkInstallStatus();
         if (installed) {
             installText.textContent = 'Installed';
             installBtn.disabled = true;
             installBtn.style.opacity = '0.7';
             installBtn.title = 'App is already installed';
+            localStorage.setItem('taskflow_installed', 'true');
         } else {
             installText.textContent = 'Install';
             installBtn.disabled = false;
@@ -112,35 +121,41 @@ function setupPWAInstall() {
         }
     }
     
-    if (isStandalone || isIOSStandalone) {
-        updateInstallButton(true);
-        return;
-    }
+    updateInstallButton();
+    setTimeout(updateInstallButton, 1000);
     
-    // Capture install prompt (Chrome/Edge/Android)
+    // ============================================
+    // 📥 CAPTURE INSTALL PROMPT
+    // ============================================
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        updateInstallButton(false);
+        if (!checkInstallStatus()) {
+            installBtn.style.display = 'inline-flex';
+            updateInstallButton();
+        }
         console.log('[PWA] Install prompt captured');
     });
     
-    // Handle successful install
+    // ============================================
+    // ✅ HANDLE SUCCESSFUL INSTALL
+    // ============================================
     window.addEventListener('appinstalled', () => {
-        updateInstallButton(true);
+        localStorage.setItem('taskflow_installed', 'true');
+        updateInstallButton();
         showToast('TaskFlow Pro installed! 🎉');
-        console.log('[PWA] App installed');
+        console.log('[PWA] App installed successfully');
     });
     
-    // Install button click handler
+    // ============================================
+    // 🖱️ INSTALL BUTTON CLICK HANDLER
+    // ============================================
     installBtn.addEventListener('click', async () => {
-        // Re-check install status
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        if (checkInstallStatus()) {
             showToast('Software already installed', false, 2500);
             return;
         }
         
-        // If we have the prompt, trigger it
         if (deferredPrompt) {
             try {
                 installText.textContent = 'Installing...';
@@ -149,37 +164,41 @@ function setupPWAInstall() {
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
                     console.log('[PWA] User accepted install');
+                    localStorage.setItem('taskflow_installed', 'true');
+                    updateInstallButton();
                 } else {
                     console.log('[PWA] User dismissed install');
-                    // Show fallback modal with manual instructions
                     openInstallModal();
                 }
                 deferredPrompt = null;
             } catch (err) {
                 console.error('[PWA] Install error:', err);
-                openInstallModal(); // Show manual instructions
+                openInstallModal();
             }
         } else {
-            // No prompt available - show manual instructions
             console.log('[PWA] No install prompt - showing manual guide');
             openInstallModal();
         }
     });
     
-    // Open install fallback modal
+    // ============================================
+    // 📋 INSTALL FALLBACK MODAL
+    // ============================================
     function openInstallModal() {
         if (installModal) installModal.classList.add('active');
     }
     
-    // Close install modal
     installModal?.querySelector('.close-modal')?.addEventListener('click', () => {
         installModal.classList.remove('active');
     });
+    
     installModal?.querySelector('#installConfirmBtn')?.addEventListener('click', () => {
         installModal.classList.remove('active');
+        localStorage.setItem('taskflow_installed', 'true');
+        updateInstallButton();
         showToast('Thanks for installing! ✨');
-        updateInstallButton(true);
     });
+    
     window.addEventListener('click', (e) => {
         if (e.target === installModal) installModal.classList.remove('active');
     });
@@ -191,9 +210,7 @@ function setupPWAInstall() {
         setInterval(() => {
             navigator.serviceWorker.getRegistration().then(reg => reg?.update());
         }, 60 * 60 * 1000);
-    }
-    
-    if ('serviceWorker' in navigator) {
+        
         navigator.serviceWorker.addEventListener('message', (event) => {
             if (event.data?.type === 'SW_UPDATED') {
                 console.log('[SW] Update available:', event.data.version);
@@ -225,7 +242,7 @@ function initApp() {
         saveAccount() { if (this.account) localStorage.setItem(this.accountKey, JSON.stringify(this.account)); }
         updateAccount(updates) { this.account = { ...this.account, ...updates }; this.saveAccount(); }
         deleteAccount() { localStorage.removeItem(this.accountKey); this.account = null; }
-        exportBackup(tasks) { return { version: '3.2', exportedAt: new Date().toISOString(), account: this.account, tasks, meta: { app: 'TaskFlow Pro', origin: window.location.origin } }; }
+        exportBackup(tasks) { return { version: '3.2.1', exportedAt: new Date().toISOString(), account: this.account, tasks, meta: { app: 'TaskFlow Pro', origin: window.location.origin } }; }
         importBackup(data) { if (!data.account || !Array.isArray(data.tasks)) throw new Error('Invalid backup'); this.account = data.account; this.saveAccount(); return data.tasks; }
         isAuthenticated() { return this.account !== null; }
     }
