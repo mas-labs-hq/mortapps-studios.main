@@ -7,23 +7,23 @@
     <meta name="description" content="Privacy-first Kanban board by MortApps Studios. Offline-capable, local storage, no tracking.">
     
     <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="TaskFlow Pro">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
@@ -183,33 +183,17 @@
             </div>
         </div>
 
-        <!-- ✅ INSTALL FALLBACK MODAL (NEW) -->
+        <!-- Install Fallback Modal -->
         <div id="installModal" class="modal">
             <div class="modal-content modal-slide">
                 <div class="modal-header"><h2><i class="fa-solid fa-download"></i> Install TaskFlow Pro</h2><button class="close-modal">&times;</button></div>
                 <div class="install-guide">
                     <p class="install-intro">Add TaskFlow Pro to your device for offline access and quick launch.</p>
-                    
-                    <div class="install-step">
-                        <span class="install-icon"><i class="fa-brands fa-chrome"></i></span>
-                        <div><strong>Chrome / Edge (Desktop)</strong><p>Click the <strong>⋮</strong> menu → <strong>Install TaskFlow Pro</strong></p></div>
-                    </div>
-                    <div class="install-step">
-                        <span class="install-icon"><i class="fa-brands fa-chrome"></i></span>
-                        <div><strong>Chrome (Android)</strong><p>Tap the <strong>⋮</strong> menu → <strong>Install app</strong> or <strong>Add to Home screen</strong></p></div>
-                    </div>
-                    <div class="install-step">
-                        <span class="install-icon"><i class="fa-brands fa-safari"></i></span>
-                        <div><strong>Safari (iOS)</strong><p>Tap <strong>Share</strong> → <strong>Add to Home Screen</strong></p></div>
-                    </div>
-                    <div class="install-step">
-                        <span class="install-icon"><i class="fa-brands fa-firefox"></i></span>
-                        <div><strong>Firefox</strong><p>Open menu → <strong>Page</strong> → <strong>Install</strong></p></div>
-                    </div>
-                    
-                    <div class="install-note">
-                        <small><i class="fa-solid fa-circle-info"></i> If you don't see the install option, ensure you're using HTTPS or localhost, and that you've interacted with the page.</small>
-                    </div>
+                    <div class="install-step"><span class="install-icon"><i class="fa-brands fa-chrome"></i></span><div><strong>Chrome / Edge (Desktop)</strong><p>Click the <strong>⋮</strong> menu → <strong>Install TaskFlow Pro</strong></p></div></div>
+                    <div class="install-step"><span class="install-icon"><i class="fa-brands fa-chrome"></i></span><div><strong>Chrome (Android)</strong><p>Tap the <strong>⋮</strong> menu → <strong>Install app</strong> or <strong>Add to Home screen</strong></p></div></div>
+                    <div class="install-step"><span class="install-icon"><i class="fa-brands fa-safari"></i></span><div><strong>Safari (iOS)</strong><p>Tap <strong>Share</strong> → <strong>Add to Home Screen</strong></p></div></div>
+                    <div class="install-step"><span class="install-icon"><i class="fa-brands fa-firefox"></i></span><div><strong>Firefox</strong><p>Open menu → <strong>Page</strong> → <strong>Install</strong></p></div></div>
+                    <div class="install-note"><small><i class="fa-solid fa-circle-info"></i> If you don't see the install option, ensure you're using HTTPS or localhost, and that you've interacted with the page.</small></div>
                 </div>
                 <div class="modal-actions">
                     <button class="btn-secondary close-modal">Close</button>
@@ -232,6 +216,6 @@
         <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
     </div>
 
-    <script src="script.js" defer></script>
+    <script src="./script.js" defer></script>
 </body>
 </html>
