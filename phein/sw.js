@@ -1,5 +1,5 @@
 // Phein Service Worker v2.1
-const CACHE_NAME = 'phein-v2.1';
+const CACHE_NAME = 'phein-v6.0';
 const ASSETS_TO_CACHE = [
     '/phein/',
     '/phein/index.html',
