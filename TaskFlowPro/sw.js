@@ -1,28 +1,19 @@
 /**
  * TaskFlow Pro Service Worker
- * Version: 3.1.0 - Wavy background, PWA install fix, auto-update system
+ * Version: 3.2.1 - Subdirectory hosting fix, reliable install detection
  * 
- * HOW UPDATES WORK:
- * 1. Change CACHE_VERSION below when you update any file
- * 2. Users will automatically get the new version on next visit
- * 3. The old cache is cleaned up automatically
- * 4. PWA users will receive updates automatically
- * 
- * AUTO-REFRESH:
- * - PWA checks for SW updates on each visit
- * - If SW version changed, app auto-reloads
- * 
- * ALL APP LOGIC IS IN script.js - Edit there for functionality changes
+ * HOSTING NOTE: This SW is designed for subdirectory deployment (e.g., /TaskFlowPro/)
+ * All paths are relative to the manifest location.
  */
 
 // ============================================
-// ⚙️ CHANGE THIS VERSION WHEN YOU UPDATE THE APP
+// ⚙️ VERSION - INCREMENT TO FORCE UPDATES
 // ============================================
-const CACHE_VERSION = '3.1.0';
+const CACHE_VERSION = '3.2.1';
 const CACHE_NAME = 'taskflow-pro-v' + CACHE_VERSION;
 
 // ============================================
-// 📦 FILES TO CACHE FOR OFFLINE USE
+// 📦 FILES TO CACHE (Relative Paths for Subdirectory)
 // ============================================
 const STATIC_ASSETS = [
     './',
@@ -41,66 +32,50 @@ const STATIC_ASSETS = [
 ];
 
 // ============================================
-// 🔄 INSTALL EVENT - Cache static assets
+// 🔄 INSTALL EVENT
 // ============================================
 self.addEventListener('install', function(event) {
     console.log('[SW] Installing version:', CACHE_VERSION);
-    
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(function(cache) {
-                console.log('[SW] Caching static assets');
-                // Cache files individually to handle failures gracefully
+                console.log('[SW] Caching assets');
                 return Promise.all(
                     STATIC_ASSETS.map(function(url) {
                         return cache.add(url).catch(function(err) {
-                            console.warn('[SW] Failed to cache:', url, err);
+                            console.warn('[SW] Cache miss (non-critical):', url, err);
                         });
                     })
                 );
             })
-            .then(function() {
-                console.log('[SW] All assets cached');
-                // Force activation of new service worker immediately
-                return self.skipWaiting();
-            })
+            .then(() => self.skipWaiting())
     );
 });
 
 // ============================================
-// ⚡ ACTIVATE EVENT - Clean old caches & Take control
+// ⚡ ACTIVATE EVENT - Clean old caches
 // ============================================
 self.addEventListener('activate', function(event) {
     console.log('[SW] Activating version:', CACHE_VERSION);
-    
     event.waitUntil(
         caches.keys()
             .then(function(cacheNames) {
                 return Promise.all(
                     cacheNames
-                        .filter(function(cacheName) {
-                            // Delete any cache that isn't our current version
-                            return cacheName.startsWith('taskflow-pro-') && cacheName !== CACHE_NAME;
+                        .filter(function(name) {
+                            return name.startsWith('taskflow-pro-') && name !== CACHE_NAME;
                         })
-                        .map(function(cacheName) {
-                            console.log('[SW] Deleting old cache:', cacheName);
-                            return caches.delete(cacheName);
+                        .map(function(name) {
+                            console.log('[SW] Deleting old cache:', name);
+                            return caches.delete(name);
                         })
                 );
             })
+            .then(() => self.clients.claim())
             .then(function() {
-                console.log('[SW] Old caches cleared');
-                // Take control of all pages immediately
-                return self.clients.claim();
-            })
-            .then(function() {
-                // Notify all clients that a new version is available
                 return self.clients.matchAll().then(function(clients) {
                     clients.forEach(function(client) {
-                        client.postMessage({
-                            type: 'SW_UPDATED',
-                            version: CACHE_VERSION
-                        });
+                        client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
                     });
                 });
             })
@@ -108,96 +83,54 @@ self.addEventListener('activate', function(event) {
 });
 
 // ============================================
-// 🌐 FETCH EVENT - Cache-first for static assets
+// 🌐 FETCH EVENT - Cache-first with network update
 // ============================================
 self.addEventListener('fetch', function(event) {
     const request = event.request;
-    
-    // Skip non-GET requests
     if (request.method !== 'GET') return;
     
-    // Skip cross-origin requests (like APIs, CDN, etc.)
+    // Only handle same-origin requests
     if (!request.url.startsWith(self.location.origin)) return;
     
-    // For navigation requests (HTML pages), use network-first strategy
+    // Navigation requests: network-first
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
                 .then(function(response) {
-                    // Clone response before caching
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then(function(cache) {
-                        cache.put(request, responseClone);
-                    });
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
                     return response;
                 })
-                .catch(function() {
-                    // If network fails, try cache
-                    return caches.match(request)
-                        .then(function(response) {
-                            return response || caches.match('./index.html');
-                        });
-                })
+                .catch(() => caches.match(request).then(r => r || caches.match('./index.html')))
         );
         return;
     }
     
-    // For static assets, use cache-first strategy with network update
+    // Static assets: cache-first with background update
     event.respondWith(
         caches.match(request)
-            .then(function(cachedResponse) {
-                // Return cached version immediately if available
-                const fetchPromise = fetch(request)
-                    .then(function(networkResponse) {
-                        // Update cache with fresh version
-                        if (networkResponse && networkResponse.status === 200) {
-                            const responseClone = networkResponse.clone();
-                            caches.open(CACHE_NAME).then(function(cache) {
-                                cache.put(request, responseClone);
-                            });
+            .then(function(cached) {
+                const networkFetch = fetch(request)
+                    .then(function(response) {
+                        if (response && response.status === 200) {
+                            const clone = response.clone();
+                            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
                         }
-                        return networkResponse;
+                        return response;
                     })
-                    .catch(function() {
-                        // Network failed, rely on cache
-                        return cachedResponse;
-                    });
+                    .catch(() => cached);
                 
-                // Return cache immediately, but update in background
-                return cachedResponse || fetchPromise;
+                return cached || networkFetch;
             })
     );
 });
 
 // ============================================
-// 💬 MESSAGE HANDLING - For manual cache clear and skip waiting
+// 💬 MESSAGE HANDLING
 // ============================================
 self.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        console.log('[SW] Skip waiting requested');
-        self.skipWaiting();
-    }
-    
-    if (event.data && event.data.type === 'CLEAR_CACHE') {
-        caches.delete(CACHE_NAME).then(function() {
-            console.log('[SW] Cache cleared');
-        });
-    }
+    if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+    if (event.data?.type === 'CLEAR_CACHE') caches.delete(CACHE_NAME);
 });
 
-// ============================================
-// 🔄 BACKGROUND SYNC - For future offline features
-// ============================================
-self.addEventListener('sync', function(event) {
-    if (event.tag === 'sync-tasks') {
-        event.waitUntil(syncPendingTasks());
-    }
-});
-
-function syncPendingTasks() {
-    // Placeholder for future offline task sync functionality
-    console.log('[SW] Syncing pending tasks...');
-    return Promise.resolve();
-}
-
-console.log('[SW] Service Worker loaded, version:', CACHE_VERSION);
+console.log('[SW] Loaded, version:', CACHE_VERSION, 'scope:', self.registration?.scope || 'pending');
