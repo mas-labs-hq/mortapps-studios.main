@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigMax | MortApps Studios Agreement</title>
+    
+    <!-- Favicons & Icons – linked from /icons/ folder (exactly as requested) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="manifest" href="icons/site.webmanifest">
+    <link rel="shortcut icon" href="icons/favicon.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --ink:#0a0a0f;--ink2:#13131a;--ink3:#1c1c27;
+            --border:rgba(255,255,255,0.07);--gold:#c9a96e;--gold2:#e8d5b0;
+            --smoke:rgba(255,255,255,0.55);--white:#ffffff;
+            --doc-bg:#fafaf8;--doc-text:#1a1a1a;--doc-gray:#555;
+            --doc-rule:#d4d0c8;--doc-accent:#1a1a2e;
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'DM Sans',sans-serif;background:var(--ink);min-height:100vh;color:var(--white);}
+        .topbar{position:sticky;top:0;z-index:200;background:rgba(10,10,15,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 clamp(16px,5vw,48px);display:flex;align-items:center;justify-content:space-between;height:64px;}
+        .logo{display:flex;align-items:baseline;gap:2px;text-decoration:none;}
+        .logo-mark{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:500;color:var(--white);letter-spacing:-0.02em;}
+        .logo-mark span{color:var(--gold);}
+        .logo-badge{font-size:0.6rem;font-weight:500;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-left:8px;border:1px solid rgba(201,169,110,0.4);padding:2px 6px;border-radius:2px;}
+        .topbar-actions{display:flex;gap:10px;align-items:center;}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border:none;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.03em;cursor:pointer;transition:all 0.2s ease;white-space:nowrap;}
+        .btn-ghost{background:transparent;color:var(--smoke);border:1px solid var(--border);}
+        .btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--white);background:rgba(255,255,255,0.04);}
+        .btn-primary{background:var(--gold);color:var(--ink);font-weight:600;}
+        .btn-primary:hover{background:var(--gold2);}
+        .btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+        .btn svg{flex-shrink:0;}
+        .shell{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 64px);}
+        .sidebar{background:var(--ink2);border-right:1px solid var(--border);padding:32px 24px;display:flex;flex-direction:column;gap:40px;}
+        .sidebar-section-label{font-size:0.65rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:14px;}
+        .toc-list{list-style:none;display:flex;flex-direction:column;gap:2px;}
+        .toc-list li a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:4px;text-decoration:none;font-size:0.8rem;color:var(--smoke);transition:all 0.15s;}
+        .toc-list li a:hover{background:rgba(255,255,255,0.05);color:var(--white);}
+        .toc-num{font-size:0.65rem;color:var(--gold);font-family:'Cormorant Garamond',serif;min-width:16px;}
+        .status-card{background:var(--ink3);border:1px solid var(--border);border-radius:8px;padding:18px;}
+        .status-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+        .status-row:last-child{margin-bottom:0;}
+        .status-key{font-size:0.75rem;color:rgba(255,255,255,0.35);}
+        .status-val{font-size:0.78rem;color:var(--smoke);font-weight:500;}
+        .status-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;margin-right:5px;box-shadow:0 0 6px #4ade80;}
+        .main{padding:clamp(20px,4vw,48px);display:flex;flex-direction:column;align-items:center;background:var(--ink);}
+        .progress-bar-wrap{width:100%;max-width:820px;margin-bottom:24px;}
+        .progress-label{display:flex;justify-content:space-between;font-size:0.72rem;color:rgba(255,255,255,0.3);margin-bottom:8px;letter-spacing:0.05em;}
+        .progress-track{height:2px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;}
+        .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;transition:width 0.4s ease;}
+        #document-wrapper{background:var(--doc-bg);width:100%;max-width:820px;padding:clamp(24px,6vw,56px) clamp(24px,8vw,72px);border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 20px 60px rgba(0,0,0,0.5),0 40px 100px rgba(0,0,0,0.3);color:var(--doc-text);font-family:'DM Sans',sans-serif;position:relative;}
+        #document-wrapper::before{content:'';position:absolute;top:0;right:0;width:40px;height:40px;background:linear-gradient(225deg,rgba(201,169,110,0.15) 0%,transparent 60%);pointer-events:none;}
+        .doc-header{display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:28px;margin-bottom:32px;border-bottom:1px solid var(--doc-rule);position:relative;}
+        .doc-header-logo{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--doc-accent);letter-spacing:-0.01em;margin-bottom:4px;}
+        .doc-header-logo span{color:#9a7a40;}
+        .doc-header-rule{width:32px;height:1px;background:#9a7a40;margin:10px auto;}
+        .doc-header h2{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--doc-accent);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px;}
+        .doc-header p{font-size:0.78rem;color:var(--doc-gray);line-height:1.6;margin-bottom:3px;}
+        .doc-meta-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:12px;}
+        .doc-meta-pill{font-size:0.7rem;background:#f0ede6;color:#666;padding:3px 10px;border-radius:20px;letter-spacing:0.04em;}
+        .doc-body h3{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--doc-accent);letter-spacing:0.08em;text-transform:uppercase;margin-top:32px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--doc-rule);}
+        .doc-body h3:first-child{margin-top:0;}
+        .doc-body h4{font-size:0.85rem;font-weight:600;color:#333;margin-top:16px;margin-bottom:6px;letter-spacing:0.02em;}
+        .doc-body p,.doc-body li{font-size:0.82rem;line-height:1.75;color:#3a3a3a;margin-bottom:8px;text-align:justify;}
+        .doc-body ul{padding-left:20px;margin-bottom:12px;}
+        .doc-body li{margin-bottom:4px;}
+        .callout{background:#f5f2eb;border-left:3px solid #9a7a40;padding:14px 16px;margin:16px 0;border-radius:0 4px 4px 0;}
+        .callout p{margin:0;font-size:0.79rem;color:#555;}
+        .callout strong{color:#3a3030;}
+        .page-break{margin-top:40px;padding-top:32px;border-top:1px solid var(--doc-rule);}
+        .signing-section h3{margin-top:0 !important;}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+        @media(max-width:500px){.form-grid{grid-template-columns:1fr;}}
+        .form-group label{display:block;font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:6px;}
+        .form-group input[type="text"],.form-group input[type="date"]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--doc-text);background:#fff;transition:border-color 0.2s;outline:none;}
+        .form-group input:focus{border-color:#9a7a40;}
+        .sig-label{font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:6px;}
+        .signature-wrapper{border:1px solid #ccc;background:#fff;position:relative;height:130px;border-radius:3px;cursor:crosshair;overflow:hidden;}
+        .signature-wrapper canvas{display:block;width:100%;height:100%;}
+        .signature-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ccc;font-style:italic;font-size:0.9rem;pointer-events:none;user-select:none;transition:opacity 0.2s;}
+        .party-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px;}
+        @media(max-width:560px){.party-grid{grid-template-columns:1fr;gap:20px;}}
+        .party-block{display:flex;flex-direction:column;gap:8px;}
+        .party-title{font-size:0.68rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#aaa;margin-bottom:4px;}
+        .party-signed{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#1a1a2e;border-bottom:1px solid #ddd;padding-bottom:4px;min-height:36px;}
+        .party-name{font-size:0.78rem;color:#333;font-weight:500;}
+        .party-role{font-size:0.7rem;color:#999;}
+        .doc-footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--doc-rule);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+        .doc-footer p{font-size:0.68rem;color:#bbb;margin:0;text-align:left;}
+        .doc-footer-logo{font-family:'Cormorant Garamond',serif;font-size:1rem;color:#bbb;}
+        .doc-footer-logo span{color:#9a7a40;}
+        @media(max-width:900px){.shell{grid-template-columns:1fr;}.sidebar{display:none;}}
+        @media(max-width:640px){.logo-badge{display:none;}.btn-ghost span{display:none;}.btn-ghost{padding:9px 12px;}}
+        #pdf-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,0.92);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+        #pdf-overlay.active{display:flex;}
+        .spinner{width:40px;height:40px;border:2px solid rgba(201,169,110,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        #pdf-overlay p{font-size:0.85rem;color:var(--smoke);letter-spacing:0.06em;}
+    </style>
+</head>
+<body>
+
+<div id="pdf-overlay"><div class="spinner"></div><p>Preparing your document&#8230;</p></div>
+
+<header class="topbar">
+    <div class="logo">
+        <span class="logo-mark">Sig<span>Max</span></span>
+        <span class="logo-badge">Pro</span>
+    </div>
+    <div class="topbar-actions">
+        <button class="btn btn-ghost" onclick="clearCanvas()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6l-1 14H6L5 6M8 6V4h8v2"/></svg>
+            <span>Clear Signature</span>
+        </button>
+        <button class="btn btn-primary" onclick="generatePDF()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+            Download Signed PDF
+        </button>
+    </div>
+</header>
+
+<div class="shell">
+    <aside class="sidebar">
+        <div>
+            <p class="sidebar-section-label">Document Sections</p>
+            <ul class="toc-list">
+                <li><a href="#s1"><span class="toc-num">01</span>Introduction</a></li>
+                <li><a href="#s2"><span class="toc-num">02</span>Hosting &amp; Deployment</a></li>
+                <li><a href="#s3"><span class="toc-num">03</span>SEO &amp; Attribution</a></li>
+                <li><a href="#s4"><span class="toc-num">04</span>Domain Management</a></li>
+                <li><a href="#s5"><span class="toc-num">05</span>Intellectual Property</a></li>
+                <li><a href="#s6"><span class="toc-num">06</span>Service Termination</a></li>
+                <li><a href="#s7"><span class="toc-num">07</span>Liability</a></li>
+                <li><a href="#s8"><span class="toc-num">08</span>Client Responsibilities</a></li>
+                <li><a href="#s9"><span class="toc-num">09</span>Amendments</a></li>
+                <li><a href="#s10"><span class="toc-num">10</span>Governing Law</a></li>
+                <li><a href="#s11"><span class="toc-num">11</span>Acceptance</a></li>
+            </ul>
+        </div>
+        <div>
+            <p class="sidebar-section-label">Document Status</p>
+            <div class="status-card">
+                <div class="status-row"><span class="status-key">Status</span><span class="status-val"><span class="status-dot"></span>Ready to Sign</span></div>
+                <div class="status-row"><span class="status-key">Version</span><span class="status-val">1.0</span></div>
+                <div class="status-row"><span class="status-key">Effective</span><span class="status-val">March 2026</span></div>
+                <div class="status-row"><span class="status-key">Jurisdiction</span><span class="status-val">Kenya</span></div>
+            </div>
+        </div>
+        <div style="margin-top:auto;">
+            <p style="font-size:0.68rem;color:rgba(255,255,255,0.2);line-height:1.6;">
+                Powered by SigMax &#183; MortApps Studios<br>
+                labs&#64;mortappsstudios.com
+            </p>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="progress-bar-wrap">
+            <div class="progress-label"><span>Completion</span><span id="progress-pct">0%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+
+        <div id="document-wrapper">
+            <div class="doc-header">
+                <div class="doc-header-logo">Mort<span>Apps</span> Studios</div>
+                <div class="doc-header-rule"></div>
+                <h2>Web Development Services Agreement</h2>
+                <p>Terms &amp; Conditions for Website Development, Hosting, and Domain Management Services</p>
+                <div class="doc-meta-row">
+                    <span class="doc-meta-pill">Version 1.0</span>
+                    <span class="doc-meta-pill">March 2026</span>
+                    <span class="doc-meta-pill">Nairobi, Kenya</span>
+                    <span class="doc-meta-pill">labs&#64;mortappsstudios.com</span>
+                </div>
+            </div>
+
+            <div class="doc-body">
+                <h3 id="s1">1. Introduction</h3>
+                <p>This Web Development Services Agreement ("Agreement") outlines the terms and conditions governing the relationship between MortApps Studios ("Developer," "we," "us," or "our") and the Client ("you" or "your") for the provision of website development, hosting, and domain management services. By engaging our services, you acknowledge that you have read, understood, and agreed to be bound by the terms set forth in this document.</p>
+                <h4>1.1 Purpose of This Agreement</h4>
+                <p>This Agreement is designed to establish clear expectations, protect the interests of both parties, and ensure a transparent, professional working relationship. We believe that clarity from the outset leads to successful partnerships and exceptional outcomes.</p>
+                <h4>1.2 Scope of Services</h4>
+                <p>Our services typically include, but are not limited to:</p>
+                <ul>
+                    <li>Website design and development (HTML, CSS, JavaScript, and related technologies)</li>
+                    <li>Web application development and deployment</li>
+                    <li>Website hosting via GitHub Pages or similar platforms</li>
+                    <li>Domain name registration and management</li>
+                    <li>Search Engine Optimization (SEO) integration</li>
+                    <li>Ongoing maintenance and updates (as agreed separately)</li>
+                </ul>
+
+                <h3 id="s2">2. Hosting &amp; Deployment</h3>
+                <h4>2.1 Hosting Platform</h4>
+                <p>MortApps Studios hosts client websites on GitHub Pages or similar reputable hosting platforms. This approach offers reliability, security, and cost-effectiveness. By hosting on such platforms, the underlying code of your website may be publicly visible in repositories. This is a standard industry practice and does not compromise the security or functionality of your website.</p>
+                <h4>2.2 Visibility of Project Files</h4>
+                <p>We believe in transparency. Code hosted on public platforms like GitHub may be viewable by the public. This does not affect your website's operation, security, or exclusivity. Your website remains unique to your brand, and the public nature of the code repository is simply a technical characteristic of our chosen hosting infrastructure.</p>
+                <h4>2.3 Hosting Continuity</h4>
+                <p>MortApps Studios will maintain hosting services for the duration of our working relationship. In the event of service termination (as outlined in Section 6), hosting continuation shall be at our sole discretion. We reserve the right to remove or archive hosted projects following termination, subject to the file delivery obligations described herein.</p>
+
+                <h3 id="s3">3. SEO &amp; Brand Attribution</h3>
+                <h4>3.1 Developer Attribution</h4>
+                <p>As part of our standard practice, MortApps Studios embeds developer attribution and SEO metadata within client websites. This includes, but is not limited to:</p>
+                <ul>
+                    <li>Meta tags identifying MortApps Studios as the developer</li>
+                    <li>Footer credits or discrete branding elements</li>
+                    <li>Structured data markup referencing our portfolio</li>
+                    <li>Backlinks to our official website or portfolio</li>
+                </ul>
+                <h4>3.2 Purpose of Attribution</h4>
+                <p>This attribution serves multiple purposes: it helps potential clients discover our services through search engines, establishes credibility for both your website and our portfolio, and maintains professional industry standards. By engaging our services, you consent to the inclusion of such attribution in your website.</p>
+                <h4>3.3 Removal of Attribution</h4>
+                <p>Should you wish to remove MortApps Studios attribution from your website following project completion or termination, you may do so at your discretion. However, we kindly request that attribution remain in place as a gesture of goodwill and professional courtesy.</p>
+                <div class="callout">
+                    <p><strong>Why This Matters:</strong> Developer attribution is an industry-standard practice that benefits both parties. It enhances your website's SEO through association with our established portfolio while allowing us to grow our client base through demonstrated work quality.</p>
+                </div>
+
+                <h3 id="s4">4. Domain Name Management</h3>
+                <h4>4.1 Domain Registration</h4>
+                <p>Domain names for client projects are registered through MortApps Studios using reputable domain registrars (such as Truehost, Namecheap, or similar providers). The domain name is registered on your behalf, and you retain full ownership and rights to the domain name itself.</p>
+                <h4>4.2 Registration Details</h4>
+                <p>While we facilitate the domain registration process, the specific account credentials, registrar selection, and detailed purchase information remain within MortApps Studios' administrative control. This approach allows us to manage technical configurations efficiently and provide seamless service. We are not obligated to share registrar account details or purchase credentials with clients.</p>
+                <h4>4.3 Client Access</h4>
+                <p>Should you require direct access to manage your domain independently, we will provide reasonable guidance on the registrar platform used. However, setting up an independent account and transferring domain management is your responsibility should you choose to pursue that option.</p>
+                <h4>4.4 Domain Renewal Reminder</h4>
+                <p>MortApps Studios commits to providing a renewal reminder to clients approximately one (1) week before the domain name registration expires. This reminder will typically be sent via email, WhatsApp, or phone. The reminder is a courtesy service and is intended to help you maintain uninterrupted domain ownership.</p>
+                <h4>4.5 Renewal Responsibility</h4>
+                <p><strong>Ultimate responsibility for domain renewal rests with you, the client.</strong> While we provide reminders, it is your obligation to ensure timely renewal payment. MortApps Studios is not liable for domain expiration, loss of domain name, or any consequences resulting from failure to renew on time.</p>
+                <h4>4.6 Domain Expiration Consequences</h4>
+                <p>In the event that a domain name expires due to non-renewal:</p>
+                <ul>
+                    <li><strong>Service Disruption:</strong> Your website will become inaccessible via the domain name</li>
+                    <li><strong>Recovery Costs:</strong> Restoring an expired domain may incur additional fees from the registrar</li>
+                    <li><strong>Restoration Service:</strong> If you wish for MortApps Studios to assist in domain recovery, a restoration fee will apply, separate from the standard renewal cost</li>
+                    <li><strong>Potential Loss:</strong> Domains that remain expired for extended periods may be acquired by third parties, resulting in permanent loss</li>
+                </ul>
+                <p><strong>IMPORTANT:</strong> We strongly recommend maintaining your own calendar reminders for domain renewal dates. Our reminder service is provided as a courtesy, but we cannot guarantee delivery due to factors beyond our control.</p>
+
+                <h3 id="s5">5. Project Files &amp; Intellectual Property</h3>
+                <h4>5.1 Ownership of Deliverables</h4>
+                <p>Upon full payment for services rendered, you own the custom website content, design elements, and functionality created specifically for your project. This includes HTML, CSS, JavaScript, and any custom code developed for your website.</p>
+                <h4>5.2 Third-Party Assets</h4>
+                <p>Projects may incorporate third-party libraries, frameworks, or assets. These remain subject to their respective licenses. MortApps Studios retains the right to use general development patterns, templates, and code snippets in future projects.</p>
+                <h4>5.3 File Delivery Upon Termination</h4>
+                <p>In the event of service termination, MortApps Studios will provide you with all project source files. Delivery will typically be made via email or WhatsApp within a reasonable timeframe following termination confirmation.</p>
+
+                <h3 id="s6">6. Service Termination</h3>
+                <h4>6.1 Termination Scenarios</h4>
+                <p>This Agreement may be terminated under the following circumstances:</p>
+                <ul>
+                    <li><strong>Mutual Agreement:</strong> Both parties agree to conclude the working relationship</li>
+                    <li><strong>Completion of Project:</strong> All deliverables have been provided and accepted</li>
+                    <li><strong>Client Request:</strong> You choose to discontinue services for any reason</li>
+                    <li><strong>Developer Discretion:</strong> We reserve the right to terminate services for breach of Agreement, non-payment, or other material cause</li>
+                </ul>
+                <h4>6.2 Obligations Upon Termination</h4>
+                <p>Upon termination, MortApps Studios will deliver all project source files, provide reasonable guidance on domain registration details, and fulfill any outstanding payment obligations on our end, if applicable.</p>
+                <h4>6.3 Post-Termination Hosting</h4>
+                <p>Continued hosting of your website on our GitHub infrastructure following termination is at our sole discretion. We may choose to maintain hosting as a courtesy, archive the repository, or remove it entirely. To ensure uninterrupted service, we recommend that clients establish independent hosting arrangements following termination.</p>
+                <h4>6.4 Post-Termination Domain Management</h4>
+                <p>We are not obligated to continue managing your domain name post-termination. We will inform you of the registrar platform used, but setting up independent domain management is your responsibility. Any future renewals, transfers, or modifications must be handled directly by you or through a new service provider.</p>
+
+                <h3 id="s7">7. Limitation of Liability</h3>
+                <h4>7.1 Service Availability</h4>
+                <p>While we strive to maintain high availability and uptime for hosted websites, MortApps Studios cannot guarantee uninterrupted service. Factors beyond our control&#8212;including hosting platform outages, internet connectivity issues, and force majeure events&#8212;may affect service availability.</p>
+                <h4>7.2 Domain Expiration</h4>
+                <p>MortApps Studios is not liable for any damages, losses, or disruptions resulting from domain name expiration. This includes loss of business, revenue, data, or reputation. The renewal reminder we provide is a courtesy, not a guarantee.</p>
+                <h4>7.3 Maximum Liability</h4>
+                <p>In no event shall MortApps Studios' total liability exceed the total amount paid by you for the specific service giving rise to the claim. This limitation applies to all claims, whether based on contract, tort, or otherwise.</p>
+
+                <h3 id="s8">8. Client Responsibilities</h3>
+                <p>To ensure a successful partnership, we ask that you:</p>
+                <ul>
+                    <li><strong>Provide Timely Information:</strong> Supply all necessary content, images, and branding materials promptly</li>
+                    <li><strong>Review &amp; Feedback:</strong> Provide feedback on deliverables within agreed timeframes</li>
+                    <li><strong>Payment:</strong> Fulfill all payment obligations as agreed</li>
+                    <li><strong>Domain Renewal:</strong> Ensure timely renewal of domain registration</li>
+                    <li><strong>Communication:</strong> Maintain updated contact information for renewal reminders and important notices</li>
+                    <li><strong>Independent Backup:</strong> Maintain your own copies of all delivered files and content</li>
+                </ul>
+
+                <h3 id="s9">9. Amendments &amp; Modifications</h3>
+                <p>This Agreement may be amended or modified only by written consent of both parties. Any changes to the terms outlined herein must be documented and signed by authorized representatives of both MortApps Studios and the Client.</p>
+
+                <h3 id="s10">10. Governing Law &amp; Dispute Resolution</h3>
+                <p>This Agreement shall be governed by and construed in accordance with the laws of the Republic of Kenya. In the event of any dispute arising from or relating to this Agreement, the parties shall first attempt to resolve the matter through good-faith negotiation. Should negotiation fail, the dispute may be submitted to the appropriate courts of Kenya.</p>
+
+                <h3 id="s11">11. Agreement Acceptance</h3>
+                <p>By engaging MortApps Studios for web development services, you acknowledge that you have read, understood, and agree to be bound by the terms and conditions outlined in this Agreement. This Agreement becomes effective upon the earlier of: (a) your signature below, or (b) your payment for services or acceptance of deliverables.</p>
+
+                <div class="page-break signing-section">
+                    <h3>Client Acknowledgment</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="clientName">Full Legal Name</label>
+                            <input type="text" id="clientName" placeholder="e.g. Jane Wambui Muthoni">
+                        </div>
+                        <div class="form-group">
+                            <label for="signDate">Date of Signing</label>
+                            <input type="date" id="signDate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <p class="sig-label">Signature</p>
+                        <div class="signature-wrapper" id="signature-pad">
+                            <span class="signature-placeholder" id="sig-placeholder">Sign inside the box</span>
+                            <canvas id="sigCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="party-grid">
+                        <div class="party-block">
+                            <p class="party-title">For MortApps Studios</p>
+                            <div class="party-signed">MortApps Studios</div>
+                            <p class="party-name">Authorized Representative</p>
+                            <p class="party-role">Developer / Service Provider</p>
+                        </div>
+                        <div class="party-block">
+                            <p class="party-title">For the Client</p>
+                            <div class="party-signed" id="preview-name" style="color:#ccc;font-style:italic;">Awaiting signature&#8230;</div>
+                            <p class="party-name" id="preview-date" style="color:#aaa;">&#8212;</p>
+                            <p class="party-role">Client / Service Recipient</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-footer">
+                <p>MortApps Studios &#183; Nairobi, Kenya &#183; labs&#64;mortappsstudios.com &#183; +254 113 400 063</p>
+                <div class="doc-footer-logo">Sig<span>Max</span></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // 1. Block all right‑click actions and developer tools
+    (function() {
+        // Disable context menu (right-click)
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Disable common keyboard shortcuts used to open dev tools
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+U (view source)
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+S (save)
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+U (sometimes opens dev tools in some browsers)
+            if (e.ctrlKey && e.shiftKey && e.key === 'U') {
+                e.preventDefault();
+                return false;
+            }
+        });
+    })();
+
+    // Original signature and PDF generation logic (unchanged)
+    const sigCanvas = document.getElementById('sigCanvas');
+    const ctx = sigCanvas.getContext('2d');
+    let isDrawing = false, lastX = 0, lastY = 0;
+
+    function resizeCanvas() {
+        const rect = sigCanvas.parentElement.getBoundingClientRect();
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        sigCanvas.width = rect.width * ratio;
+        sigCanvas.height = rect.height * ratio;
+        ctx.scale(ratio, ratio);
+        ctx.strokeStyle = '#1a1a2e';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    }
+    window.addEventListener('resize', resizeCanvas);
+    setTimeout(resizeCanvas, 120);
+
+    function getPos(e) {
+        const rect = sigCanvas.getBoundingClientRect();
+        const src = e.touches ? e.touches[0] : e;
+        return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+    }
+    function startDrawing(e) {
+        isDrawing = true;
+        const p = getPos(e);
+        lastX = p.x; lastY = p.y;
+        document.getElementById('sig-placeholder').style.opacity = '0';
+    }
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const p = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        lastX = p.x; lastY = p.y;
+    }
+    function stopDrawing() { isDrawing = false; }
+
+    sigCanvas.addEventListener('mousedown', startDrawing);
+    sigCanvas.addEventListener('mousemove', draw);
+    sigCanvas.addEventListener('mouseup', stopDrawing);
+    sigCanvas.addEventListener('mouseout', stopDrawing);
+    sigCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+    sigCanvas.addEventListener('touchmove', draw, { passive: false });
+    sigCanvas.addEventListener('touchend', stopDrawing);
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+        document.getElementById('sig-placeholder').style.opacity = '1';
+    }
+
+    document.getElementById('signDate').valueAsDate = new Date();
+
+    document.getElementById('clientName').addEventListener('input', function() {
+        const v = this.value.trim();
+        const el = document.getElementById('preview-name');
+        el.textContent = v || 'Awaiting signature\u2026';
+        el.style.color = v ? '#1a1a2e' : '#ccc';
+        el.style.fontStyle = v ? 'normal' : 'italic';
+        updateProgress();
+    });
+    document.getElementById('signDate').addEventListener('change', function() {
+        const d = this.value ? new Date(this.value).toLocaleDateString('en-KE', { day:'numeric', month:'long', year:'numeric' }) : '\u2014';
+        document.getElementById('preview-date').textContent = d;
+        updateProgress();
+    });
+
+    function isCanvasSigned() {
+        const data = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+        for (let i = 3; i < data.length; i += 4) { if (data[i] > 0) return true; }
+        return false;
+    }
+    function updateProgress() {
+        const hasName = !!document.getElementById('clientName').value.trim();
+        const hasDate = !!document.getElementById('signDate').value;
+        const hasSig = isCanvasSigned();
+        const pct = Math.round(([hasName, hasDate, hasSig].filter(Boolean).length / 3) * 100);
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-pct').textContent = pct + '%';
+    }
+    setInterval(updateProgress, 1000);
+
+    async function generatePDF() {
+        const name = document.getElementById('clientName').value.trim();
+        if (!name) { alert('Please enter your full legal name before downloading.'); return; }
+        if (!isCanvasSigned()) { alert('Please add your signature before downloading.'); return; }
+
+        document.getElementById('pdf-overlay').classList.add('active');
+        try {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('document-wrapper');
+            const snap = await html2canvas(element, { scale: 2, useCORS: true, logging: false, windowWidth: 900 });
+
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfW = pdf.internal.pageSize.getWidth();
+            const pdfH = pdf.internal.pageSize.getHeight();
+            const pxPerMm = snap.width / pdfW;
+            const pageHeightPx = Math.floor(pdfH * pxPerMm * 0.92);
+            const totalHeight = snap.height;
+
+            const fullC = document.createElement('canvas');
+            fullC.width = snap.width; fullC.height = snap.height;
+            fullC.getContext('2d').drawImage(snap, 0, 0);
+            const pixelData = fullC.getContext('2d').getImageData(0, 0, snap.width, snap.height).data;
+
+            function isBlankRow(y) {
+                if (y < 0 || y >= totalHeight) return true;
+                const rowStart = y * snap.width * 4;
+                for (let x = 0; x < snap.width; x++) {
+                    const idx = rowStart + x * 4;
+                    if (pixelData[idx] < 245 || pixelData[idx+1] < 245 || pixelData[idx+2] < 245) return false;
+                }
+                return true;
+            }
+            function findSafeCut(idealY) {
+                for (let dy = 0; dy <= 80; dy++) {
+                    if (isBlankRow(idealY - dy)) return idealY - dy;
+                }
+                return idealY;
+            }
+
+            const cuts = [];
+            let yOffset = 0;
+            while (yOffset < totalHeight) {
+                const idealEnd = yOffset + pageHeightPx;
+                if (idealEnd >= totalHeight) { cuts.push({ start: yOffset, end: totalHeight }); break; }
+                const safeEnd = findSafeCut(idealEnd);
+                cuts.push({ start: yOffset, end: safeEnd });
+                yOffset = safeEnd;
+            }
+
+            cuts.forEach((cut, i) => {
+                const sliceH = cut.end - cut.start;
+                if (sliceH <= 0) return;
+                const sc = document.createElement('canvas');
+                sc.width = snap.width; sc.height = sliceH;
+                const sctx = sc.getContext('2d');
+                sctx.fillStyle = '#ffffff';
+                sctx.fillRect(0, 0, snap.width, sliceH);
+                sctx.drawImage(snap, 0, cut.start, snap.width, sliceH, 0, 0, snap.width, sliceH);
+                if (i > 0) pdf.addPage();
+                pdf.addImage(sc.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, sliceH / pxPerMm);
+            });
+
+            pdf.save('MortApps_Agreement_' + name.replace(/\s+/g, '_') + '.pdf');
+        } catch (err) {
+            console.error(err);
+            alert('Error generating PDF. Please try again.');
+        } finally {
+            document.getElementById('pdf-overlay').classList.remove('active');
+        }
+    }
+</script>
+</body>
+</html>
