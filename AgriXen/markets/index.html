@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#10B981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AgriXen Markets">
+    <meta name="description" content="AgriXen Markets - Kenya's Digital Produce Marketplace. Buy and sell fresh farm produce directly.">
+    <meta name="author" content="MortApps Studios">
+    <meta name="robots" content="index, follow">
+
+    <title>AgriXen Markets | Kenya's Digital Produce Marketplace</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="icons/site.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="icon" href="icons/favicon.ico">
+
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        :root {
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --primary-light: #34D399;
+            --primary-bg: #ECFDF5;
+            --buy: #10B981;
+            --buy-dark: #059669;
+            --sell: #F59E0B;
+            --sell-dark: #D97706;
+            --sell-light: #FCD34D;
+            --bg: #F8FAFC;
+            --fg: #0F172A;
+            --muted: #64748B;
+            --card: #FFFFFF;
+            --border: #E2E8F0;
+            --surface: #F1F5F9;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.06);
+            --radius: 12px;
+        }
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ===================================================== -->
+    <!-- LOADING SCREEN -->
+    <!-- ===================================================== -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loader-content">
+            <div class="loader-logo">AgriXen Markets</div>
+            <div class="loader-tagline">Powered By MortApps Studios</div>
+            <div class="loader-bar-track">
+                <div class="loader-bar-fill"></div>
+            </div>
+            <div class="loader-whatsapp-tag">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Integrated with WhatsApp
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- MAIN APP -->
+    <!-- ===================================================== -->
+    <div id="app" class="app hidden">
+
+        <!-- HEADER -->
+        <header id="header" class="header">
+            <div class="header-inner">
+                <div class="brand">
+                    <img src="icons/favicon-32x32.png" alt="AgriXen Markets" class="brand-icon">
+                    <div class="brand-text">
+                        <span class="brand-name">AgriXen Markets</span>
+                        <span class="brand-tag">Fresh Produce Marketplace</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="installBtn" class="header-btn" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Install
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- HERO STRIP -->
+        <div class="hero-strip">
+            <div class="hero-inner">
+                <h1 class="hero-title">Fresh Produce,<br><span>Real Prices.</span></h1>
+                <p class="hero-sub">Buy & sell farm produce directly. Updated daily.</p>
+            </div>
+        </div>
+
+        <!-- SEARCH BAR -->
+        <div class="search-wrapper">
+            <div class="search-inner">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search produce...">
+                <button id="clearSearch" class="search-clear" style="display:none;">&times;</button>
+            </div>
+        </div>
+
+        <!-- CATEGORY BAR -->
+        <div class="category-wrapper">
+            <div class="category-scroll" id="categoryScroll">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+
+        <!-- PRODUCE GRID -->
+        <main class="main-content">
+            <div class="produce-grid" id="produceGrid">
+                <!-- Generated by JS -->
+            </div>
+            <div id="noResults" class="no-results" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                <p>No produce found</p>
+                <span>Try a different search or category</span>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <span class="footer-logo">AgriXen Markets</span>
+                    <span class="footer-desc">Kenya's Digital Produce Marketplace</span>
+                </div>
+                <a href="https://www.mortappsstudios.com" target="_blank" rel="noopener" class="footer-powered">
+                    Powered By MortApps Studios
+                </a>
+                <p class="footer-copy">&copy; 2026 AgriXen Markets. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- BUY / SELL MODAL -->
+    <!-- ===================================================== -->
+    <div id="actionModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <img id="modalImage" src="" alt="" class="modal-thumb">
+                    <div>
+                        <h2 id="modalTitle" class="modal-title">Buy Tomatoes</h2>
+                        <p id="modalPrice" class="modal-price">KES 80 / kg</p>
+                    </div>
+                </div>
+                <button id="modalClose" class="modal-close-btn">&times;</button>
+            </div>
+
+            <form id="actionForm" class="modal-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="formName">Your Name <span class="required">*</span></label>
+                    <input type="text" id="formName" required placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label for="formLocation">Your Location <span class="required">*</span></label>
+                    <input type="text" id="formLocation" required placeholder="e.g. Nairobi, Nakuru, Mombasa">
+                </div>
+                <div class="form-group">
+                    <label for="formQuantity" id="quantityLabel">Quantity Needed <span class="required">*</span></label>
+                    <input type="text" id="formQuantity" required placeholder="e.g. 5 kg">
+                </div>
+                <div class="form-group sell-field" id="askingPriceGroup" style="display:none;">
+                    <label for="formAskingPrice">Your Asking Price (per unit)</label>
+                    <input type="text" id="formAskingPrice" placeholder="e.g. KES 70 per kg">
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <span id="submitBtnText">Get via WhatsApp</span>
+                </button>
+            </form>
+
+            <p class="modal-note">Your request is sent directly to our team. We handle everything from there.</p>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- INSTALL MODAL -->
+    <!-- ===================================================== -->
+    <div id="installModal" class="modal-overlay hidden">
+        <div class="install-card">
+            <div class="install-icon-wrap">
+                <img src="icons/android-chrome-192x192.png" alt="AgriXen Markets" class="install-icon">
+            </div>
+            <h3>Install AgriXen Markets</h3>
+            <p>Get instant access to produce prices and marketplace — right from your home screen.</p>
+            <button id="installAppBtn" class="install-action-btn">Install App</button>
+            <button id="installLaterBtn" class="install-later-btn">Later</button>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

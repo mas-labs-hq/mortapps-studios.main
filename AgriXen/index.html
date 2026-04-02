@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#10B981">
+    <meta name="description" content="AgriXen - Smart farming assistant for Kenyan farmers. Crop recommendations, weather forecasts, and AI agricultural advice.">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AgriXen">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="AgriXen">
+    <meta name="msapplication-TileColor" content="#10B981">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <link rel="manifest" href="manifest.json">
+    <title>AgriXen - Smart Farming Assistant</title>
+    
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="icons/favicon.ico">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Community Join Button Styles -->
+    <style>
+        .community-join-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: white;
+            color: #10B981;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .community-join-btn:hover {
+            background: #F0FDF4;
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .community-join-btn svg {
+            flex-shrink: 0;
+        }
+        
+        /* Install button - installed state */
+        .footer-btn.installed {
+            background: #D1FAE5 !important;
+            color: #059669 !important;
+            cursor: default !important;
+        }
+        .footer-btn.installed:hover {
+            transform: none !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        }
+        .footer-btn.installed svg {
+            color: #10B981;
+        }
+
+        /* Explore Markets Link Card */
+        .explore-market-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            grid-column: 1 / -1;
+        }
+        .explore-market-link .action-card-icon {
+            background: linear-gradient(135deg, #10B981, #34D399);
+        }
+        .explore-market-link .action-card-icon svg {
+            color: white;
+        }
+        .explore-market-link .action-card-btn {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+    </style>
+
+    <!-- Code Protection -->
+    <script>
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <svg viewBox="0 0 100 100" class="loading-hex">
+                    <defs>
+                        <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#10B981"/>
+                            <stop offset="100%" style="stop-color:#34D399"/>
+                        </linearGradient>
+                    </defs>
+                    <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="none" stroke="url(#hexGrad)" stroke-width="3"/>
+                    <text x="50" y="58" text-anchor="middle" font-family="Orbitron" font-size="20" font-weight="700" fill="url(#hexGrad)">AX</text>
+                </svg>
+            </div>
+            <h1 class="loading-title">AgriXen</h1>
+            <p class="loading-tagline">Smart Farming Assistant</p>
+            <div class="loading-bar"><div class="loading-progress"></div></div>
+            <p class="loading-status">Loading...</p>
+            <p class="loading-powered">Powered By MortApps Studios</p>
+        </div>
+    </div>
+
+    <!-- Notification Permission Modal -->
+    <div id="notificationModal" class="modal hidden">
+        <div class="modal-content notification-modal">
+            <div class="notification-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+            <h3>Stay Updated!</h3>
+            <p class="notification-desc">Get alerts for weather changes, planting seasons, harvesting tips, and important farming updates.</p>
+            <div class="notification-benefits">
+                <div class="benefit-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span>Weather Alerts</span>
+                </div>
+                <div class="benefit-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L12 22"/><path d="M12 2c-3 3-6 4-6 8s3 6 6 6 6-2 6-6-3-5-6-8z"/></svg>
+                    <span>Seasonal Tips</span>
+                </div>
+                <div class="benefit-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span>Farming Advice</span>
+                </div>
+            </div>
+            <div class="notification-actions">
+                <button id="enableNotifications" class="confirm-btn">Enable Notifications</button>
+                <button id="skipNotifications" class="skip-btn">Maybe Later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app-container hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-row">
+                <div class="logo">
+                    <svg viewBox="0 0 40 40" class="logo-icon">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10B981"/>
+                                <stop offset="100%" style="stop-color:#34D399"/>
+                            </linearGradient>
+                        </defs>
+                        <polygon points="20,2 38,11 38,29 20,38 2,29 2,11" fill="none" stroke="url(#logoGrad)" stroke-width="2"/>
+                        <text x="20" y="25" text-anchor="middle" font-family="Orbitron" font-size="10" font-weight="700" fill="url(#logoGrad)">AX</text>
+                    </svg>
+                    <span class="logo-text">AgriXen</span>
+                </div>
+                <div class="header-buttons">
+                    <button id="locationBtn" class="icon-btn" title="Change Location">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                    </button>
+                    <button id="themeToggle" class="icon-btn" title="Toggle Theme">
+                        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                        <svg class="moon-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="location-display" id="locationDisplay">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="loc-icon">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span id="currentLocation">Select your county</span>
+            </div>
+        </header>
+<!-- Weather Widget -->
+        <div class="weather-widget" id="weatherWidget">
+            <div class="weather-main">
+                <div class="weather-icon" id="weatherIcon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                    </svg>
+                </div>
+                <div class="weather-info">
+                    <div class="weather-temp" id="weatherTemp">--C</div>
+                    <div class="weather-desc" id="weatherDesc">Loading weather...</div>
+                </div>
+            </div>
+            <div class="weather-details">
+                <div class="weather-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="wd-icon">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                    <span id="rainChance">--% rain</span>
+                </div>
+                <div class="weather-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="wd-icon">
+                        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+                    </svg>
+                    <span id="windSpeed">-- km/h</span>
+                </div>
+                <div class="weather-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="wd-icon">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                    <span id="humidity">--% humidity</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="crops">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon">
+                    <path d="M12 2L12 22"/>
+                    <path d="M12 2c-3 3-6 4-6 8s3 6 6 6 6-2 6-6-3-5-6-8z"/>
+                    <path d="M8 12c-2 2-2 4 0 6"/>
+                    <path d="M16 12c2 2 2 4 0 6"/>
+                </svg>
+                <span class="tab-label">Crops</span>
+            </button>
+            <button class="tab-btn" data-tab="livestock">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon">
+                    <ellipse cx="12" cy="14" rx="8" ry="5"/>
+                    <path d="M4 10c-1-3 1-5 3-5"/>
+                    <path d="M20 10c1-3-1-5-3-5"/>
+                    <circle cx="9" cy="6" r="1"/>
+                    <circle cx="15" cy="6" r="1"/>
+                    <path d="M8 19v2M16 19v2"/>
+                </svg>
+                <span class="tab-label">Livestock</span>
+            </button>
+            <button class="tab-btn" data-tab="barn-e">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                    <path d="M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/>
+                    <path d="M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                </svg>
+                <span class="tab-label">Barn-E AI</span>
+            </button>
+            <button class="tab-btn" data-tab="vets">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span class="tab-label">VetLine</span>
+            </button>
+            <button class="tab-btn" data-tab="market">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                <span class="tab-label">Market</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Crops Tab -->
+            <section id="cropsTab" class="tab-content active">
+                <div class="section-header">
+                    <h2>Crop Recommendations</h2>
+                    <p class="section-subtitle">Based on your location and current season</p>
+                </div>
+                <div id="cropRecommendations" class="crop-grid">
+                    <!-- Crops loaded by JS -->
+                </div>
+                <div class="planting-tips">
+                    <h3>Seasonal Planting Guide</h3>
+                    <div id="plantingGuide" class="guide-content">
+                        <!-- Loaded by JS -->
+                    </div>
+                </div>
+                
+                <!-- Farmers of the Week Section -->
+                <div id="farmersOfWeekContainer" class="farmers-week-container">
+                    <!-- Loaded by JS - shows farmers Friday 12pm to Monday 12pm -->
+                </div>
+            </section>
+
+            <!-- Livestock Tab -->
+            <section id="livestockTab" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Livestock Care Guide</h2>
+                    <p class="section-subtitle">Tips and health advice for your animals</p>
+                </div>
+                <div id="livestockGrid" class="livestock-grid">
+                    <!-- Livestock cards loaded by JS -->
+                </div>
+                
+                <!-- Produce Calculator Section -->
+                <div id="produceCalculator" class="produce-calculator">
+                    <h3 class="calculator-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="calc-icon">
+                            <rect x="4" y="2" width="16" height="20" rx="2"/>
+                            <line x1="8" y1="6" x2="16" y2="6"/>
+                            <line x1="8" y1="10" x2="8" y2="10.01"/>
+                            <line x1="12" y1="10" x2="12" y2="10.01"/>
+                            <line x1="16" y1="10" x2="16" y2="10.01"/>
+                            <line x1="8" y1="14" x2="8" y2="14.01"/>
+                            <line x1="12" y1="14" x2="12" y2="14.01"/>
+                            <line x1="16" y1="14" x2="16" y2="14.01"/>
+                            <line x1="8" y1="18" x2="8" y2="18.01"/>
+                            <line x1="12" y1="18" x2="16" y2="18"/>
+                        </svg>
+                        Produce Profit Calculator
+                    </h3>
+                    <p class="calculator-subtitle">Calculate your profit or loss from livestock produce</p>
+                    
+                    <div class="calculator-form">
+                        <div class="calc-group">
+                            <label>Produce Type</label>
+                            <select id="calcProduceType" class="calc-select">
+                                <option value="eggs">Eggs</option>
+                                <option value="milk">Milk (Litres)</option>
+                                <option value="rabbits">Rabbits</option>
+                                <option value="honey">Honey (kg)</option>
+                                <option value="chicken">Chicken (meat)</option>
+                                <option value="beef">Beef (kg)</option>
+                                <option value="pork">Pork (kg)</option>
+                                <option value="goat_meat">Goat Meat (kg)</option>
+                                <option value="sheep_meat">Mutton (kg)</option>
+                                <option value="manure">Manure (bags)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="calc-row">
+                            <div class="calc-group">
+                                <label>Units Sold</label>
+                                <input type="number" id="calcUnits" class="calc-input" placeholder="e.g., 400" min="0">
+                            </div>
+                            <div class="calc-group">
+                                <label>Price per Unit (KES)</label>
+                                <input type="number" id="calcPrice" class="calc-input" placeholder="e.g., 15" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="calc-group">
+                            <label>Total Feed/Production Cost (KES)</label>
+                            <input type="number" id="calcCost" class="calc-input" placeholder="e.g., 3000" min="0">
+                        </div>
+                        
+                        <button id="calculateBtn" class="calc-button">Calculate Profit/Loss</button>
+                    </div>
+                    
+                    <div id="calculatorResult" class="calculator-result hidden">
+                        <!-- Results shown here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Barn-E AI Tab -->
+            <section id="barn-eTab" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Barn-E AI Assistant</h2>
+                    <p class="section-subtitle">Your intelligent farming companion for crops and livestock</p>
+                </div>
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="chat-message bot">
+                            <div class="message-avatar ai-avatar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                                    <path d="M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/>
+                                    <path d="M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                                </svg>
+                            </div>
+                            <div class="message-content">
+                                <p><strong>Jambo!</strong> I am Barn-E, your AI farming assistant.</p>
+                                <p>I can help you with:</p>
+                                <ul>
+                                    <li>Crop recommendations and planting schedules</li>
+                                    <li>Livestock health and management</li>
+                                    <li>Pest and disease identification</li>
+                                    <li>General farming best practices</li>
+                                </ul>
+                                <p>Ask me anything about farming!</p>
+                                <p class="disclaimer">Note: I provide guidance only. For serious conditions, please consult a professional.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <select id="topicType" class="topic-select">
+                            <option value="general">General</option>
+                            <option value="crops">Crops</option>
+                            <option value="livestock">Livestock</option>
+                        </select>
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Ask me anything about farming...">
+                        <button id="sendBtn" class="send-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VetLine Tab -->
+            <section id="vetsTab" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>VetLine Directory</h2>
+                    <p class="section-subtitle">Connect with veterinary professionals near you</p>
+                </div>
+                <div class="vet-filters">
+                    <select id="vetCountyFilter" class="vet-filter-select">
+                        <option value="">All Counties</option>
+                    </select>
+                    <select id="vetSpecialtyFilter" class="vet-filter-select">
+                        <option value="">All Specialties</option>
+                        <option value="cattle">Cattle</option>
+                        <option value="poultry">Poultry</option>
+                        <option value="goats">Goats/Sheep</option>
+                        <option value="mixed">Mixed Practice</option>
+                    </select>
+                </div>
+                <!-- Register Button -->
+                <div class="vet-register-section">
+                    <button id="vetRegisterBtn" class="vet-register-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                        Register as Veterinarian
+                    </button>
+                </div>
+                <div id="vetListings" class="vet-grid">
+                    <!-- Vet cards loaded by JS -->
+                </div>
+            </section>
+
+            <!-- Market Tab -->
+            <section id="marketTab" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Farmers Market</h2>
+                    <p class="section-subtitle">Connect with buyers and sellers across Kenya</p>
+                </div>
+                
+                <!-- Explore Markets Card -->
+                <div class="market-action-cards">
+                    <a href="/markets" class="market-action-card explore-market-link">
+                        <div class="action-card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                            </svg>
+                        </div>
+                        <h3>Explore Markets</h3>
+                        <p>Browse fresh produce, real-time prices, and connect with farmers & buyers across Kenya</p>
+                        <span class="action-card-btn">Explore Now →</span>
+                    </a>
+                </div>
+                
+                <!-- Market Ad Slots -->
+                <div class="market-ad-slots">
+                    <div class="market-ad-slot" id="marketAdSlot1">
+                        <div class="ad-slot-inner"></div>
+                    </div>
+                    <div class="market-ad-slot" id="marketAdSlot2">
+                        <div class="ad-slot-inner"></div>
+                    </div>
+                </div>
+
+                <!-- Community Section -->
+                <div class="community-section">
+                    <div class="community-header">
+                        <div class="community-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="community-info">
+                            <h3>AgriXen Community</h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                <span class="community-badge">4,800+ Farmers</span>
+                                <a href="https://2d42330f.sibforms.com/serve/MUIFAPswHoG8pQonCEWSbvAoqK5ap8ow7QQP5r1y4eIFIAeEhKFWQJKQ-y04_IYl73kprpiKF1LvcERuYduWAn4YANx0NPVNVE2QygLG3IZg8LubXEjHuckgRgDl132f7-9XBfXRa0QlsmrqZ5uglSUEELCVBO1X6W5SjiZP7esaWvU-UOQjhQGPWgL5tOKApG2Uq2slETHL-gzz7g==" target="_blank" rel="noopener noreferrer" class="community-join-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="8.5" cy="7" r="4"/>
+                                        <line x1="20" y1="8" x2="20" y2="14"/>
+                                        <line x1="23" y1="11" x2="17" y2="11"/>
+                                    </svg>
+                                    Join Us
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="community-messages" id="communityMessages">
+                        <!-- Messages loaded by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Location Modal -->
+        <div id="locationModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Select Your County</h3>
+                    <button id="closeLocationModal" class="close-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6 6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">Select your county to get personalized crop recommendations and weather data.</p>
+                    <select id="countySelect" class="county-select">
+                        <option value="">Choose your county...</option>
+                    </select>
+                    <button id="confirmLocation" class="confirm-btn">Confirm Location</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barn-E Guide Modal -->
+        <div id="barneGuideModal" class="modal hidden">
+            <div class="modal-content barne-guide-modal">
+                <div class="barne-guide-header">
+                    <div class="barne-avatar-large">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                            <path d="M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/>
+                            <path d="M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                        </svg>
+                    </div>
+                    <h3>Welcome to AgriXen!</h3>
+                    <p class="barne-intro">Hi, I'm <strong>Barn-E</strong>, your AI farming assistant. Let me show you around!</p>
+                </div>
+                <div class="barne-guide-body">
+                    <div class="guide-feature">
+                        <div class="feature-icon in-season">
+                            <span>In Season</span>
+                        </div>
+                        <div class="feature-text">
+                            <h4>In Season Tag</h4>
+                            <p>Crops marked with this tag are perfect for planting right now. These change based on the current month.</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon fit-tag">
+                            <span>Fit</span>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Fit Tag</h4>
+                            <p>When you select your county, crops that grow best in your region will show this tag. It helps you choose the right crops for your area!</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon calc-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="4" y="2" width="16" height="20" rx="2"/>
+                                <line x1="8" y1="6" x2="16" y2="6"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Profit Calculator</h4>
+                            <p>In the Livestock tab, use our calculator to track your profits from eggs, milk, honey, and other produce!</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon weather-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="4"/>
+                                <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Real Weather Data</h4>
+                            <p>Get accurate weather forecasts for your county to plan your farming activities.</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon ai-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Barn-E AI Assistant</h4>
+                            <p>Ask me anything about crops, livestock, pests, or diseases. I'm here to help 24/7!</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon marketplace-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Explore Markets</h4>
+                            <p>Discover fresh produce at real-time prices. Connect directly with farmers and buyers across Kenya on our dedicated marketplace!</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon community-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Community Section</h4>
+                            <p>Stay updated with farming tips, pest alerts, and seasonal advice. Join our community for exclusive insights!</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon farmers-week-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="8" r="7"/>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Farmers of the Week</h4>
+                            <p>Submit your best harvest on Thursday to be featured! Top 3 farmers are showcased every Friday to Monday.</p>
+                        </div>
+                    </div>
+                    <div class="guide-feature">
+                        <div class="feature-icon join-icon-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <h4>Join Our Community</h4>
+                            <p>Click "Join Us" to receive exclusive farming insights, seasonal alerts, and market updates via email or WhatsApp!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="barne-guide-footer">
+                    <button id="closeBarneGuide" class="confirm-btn">Got it!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PWA Install Modal -->
+        <div id="installModal" class="modal hidden">
+            <div class="modal-content install-modal-enhanced">
+                <button id="closeInstallModal" class="install-close-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6 6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <div class="install-hero">
+                    <div class="install-icon-large">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </div>
+                    <h3>Install AgriXen</h3>
+                    <p class="install-tagline">Add to your home screen for the best experience</p>
+                </div>
+                
+                <div class="install-benefits-grid">
+                    <div class="install-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                        </div>
+                        <span>Install App</span>
+                    </div>
+                    <div class="install-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <span>Quick access</span>
+                    </div>
+                    <div class="install-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <span>Always free</span>
+                    </div>
+                </div>
+                
+                <!-- Manual Install Instructions (shown when PWA not detected) -->
+                <div id="manualInstallInstructions" class="manual-install hidden">
+                    <p class="manual-install-title">How to install:</p>
+                    <div class="install-steps">
+                        <div class="install-step">
+                            <span class="step-number">1</span>
+                            <span>Tap the <strong>menu</strong> button in your browser</span>
+                        </div>
+                        <div class="install-step">
+                            <span class="step-number">2</span>
+                            <span>Select <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></span>
+                        </div>
+                        <div class="install-step">
+                            <span class="step-number">3</span>
+                            <span>Tap <strong>"Install"</strong> to confirm</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="install-actions-enhanced">
+                    <button id="installApp" class="install-btn-enhanced primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Install Now
+                    </button>
+                    <button id="installLater" class="install-btn-enhanced secondary">Maybe Later</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crop Detail Modal -->
+        <div id="cropDetailModal" class="modal hidden">
+            <div class="modal-content crop-detail-modal">
+                <div class="modal-header">
+                    <h3>Crop Details</h3>
+                    <button id="closeCropDetailModal" class="close-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6 6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="cropDetailContent">
+                    <!-- Content loaded by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Buy Form Modal -->
+        <div id="buyFormModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Buy Produce</h3>
+                    <button class="close-btn" onclick="closeBuyForm()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6 6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="buyForm" action="https://formspree.io/f/xpqykznw" method="POST">
+                        <input type="hidden" name="form_type" value="buy_request">
+                        <div class="form-group">
+                            <label>Product Type *</label>
+                            <select name="product_type" required>
+                                <option value="">Select product type...</option>
+                                <option value="Vegetables">Vegetables</option>
+                                <option value="Fruits">Fruits</option>
+                                <option value="Grains">Grains (Maize, Beans, Rice)</option>
+                                <option value="Tubers">Tubers (Potatoes, Cassava)</option>
+                                <option value="Dairy">Dairy Products</option>
+                                <option value="Meat">Meat & Poultry</option>
+                                <option value="Eggs">Eggs</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Name *</label>
+                            <input type="text" name="buyer_name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input type="tel" name="buyer_phone" placeholder="e.g., 0712345678" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity Needed</label>
+                            <input type="text" name="quantity" placeholder="e.g., 100 kg, 10 bags">
+                        </div>
+                        <div class="form-group">
+                            <label>Additional Notes</label>
+                            <textarea name="notes" placeholder="Any specific requirements..." rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="confirm-btn">Submit Request</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sell Form Modal -->
+        <div id="sellFormModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Sell Your Produce</h3>
+                    <button class="close-btn" onclick="closeSellForm()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6 6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="sellForm" action="https://formspree.io/f/xpqykznw" method="POST">
+                        <input type="hidden" name="form_type" value="sell_request">
+                        <div class="form-group">
+                            <label>Product Type *</label>
+                            <select name="product_type" required>
+                                <option value="">Select product type...</option>
+                                <option value="Vegetables">Vegetables</option>
+                                <option value="Fruits">Fruits</option>
+                                <option value="Grains">Grains (Maize, Beans, Rice)</option>
+                                <option value="Tubers">Tubers (Potatoes, Cassava)</option>
+                                <option value="Dairy">Dairy Products</option>
+                                <option value="Meat">Meat & Poultry</option>
+                                <option value="Eggs">Eggs</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Product Name *</label>
+                            <input type="text" name="product_name" placeholder="e.g., Fresh Tomatoes, Grade A Maize" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Name *</label>
+                            <input type="text" name="seller_name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input type="tel" name="seller_phone" placeholder="e.g., 0712345678" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Quantity Available *</label>
+                                <input type="text" name="quantity" placeholder="e.g., 500 kg" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Price (KES) *</label>
+                                <input type="text" name="price" placeholder="e.g., 50 per kg or 5000 total" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Location/County</label>
+                            <input type="text" name="location" placeholder="e.g., Nakuru County">
+                        </div>
+                        <button type="submit" class="confirm-btn">Submit Listing</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+<!-- Vet Registration Modal -->
+        <div id="vetRegisterModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Veterinarian Registration</h3>
+                    <button class="close-btn" onclick="closeVetRegister()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6 6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">Join our VetLine directory and connect with farmers who need your expertise.</p>
+                    <form id="vetRegisterForm" action="https://formspree.io/f/mjgekqvw" method="POST">
+                        <input type="hidden" name="form_type" value="vet_registration">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" name="vet_name" placeholder="Dr. Your Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender *</label>
+                            <select name="vet_gender" required>
+                                <option value="">Select gender...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>County You Serve *</label>
+                            <select name="vet_county" id="vetRegisterCounty" required>
+                                <option value="">Select county...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input type="tel" name="vet_phone" placeholder="e.g., 0712345678" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Specialty *</label>
+                            <select name="vet_specialty" required>
+                                <option value="">Select specialty...</option>
+                                <option value="Cattle">Cattle (Dairy & Beef)</option>
+                                <option value="Poultry">Poultry</option>
+                                <option value="Goats/Sheep">Goats & Sheep</option>
+                                <option value="Mixed">Mixed Practice (All Animals)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Years of Experience</label>
+                            <input type="number" name="vet_experience" placeholder="e.g., 5" min="0">
+                        </div>
+                        <div class="certification-notice">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <span><strong>Important:</strong> You must be a certified and licensed veterinarian to register. Proof of certification will be required during verification.</span>
+                        </div>
+                        <button type="submit" class="confirm-btn">Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vet Registration Success Modal -->
+        <div id="vetRegisterSuccessModal" class="modal hidden">
+            <div class="modal-content thank-you-modal">
+                <div class="thank-you-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <h3>Application Received!</h3>
+                <p class="thank-you-message">Thank you for your interest in joining the AgriXen VetLine directory. Our team will review your application and contact you within 2-3 business days.</p>
+                <p class="thank-you-sub">Please have your veterinary certification documents ready for verification. We look forward to having you on board!</p>
+                <button class="confirm-btn" onclick="closeVetRegisterSuccess()">Continue</button>
+            </div>
+        </div>
+
+        <!-- Thank You Modal -->
+        <div id="thankYouModal" class="modal hidden">
+            <div class="modal-content thank-you-modal">
+                <div class="thank-you-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <h3>Thank You!</h3>
+                <p class="thank-you-message">Your request has been submitted successfully. Our team will contact you within 48 hours to discuss your needs and connect you with the right partners.</p>
+                <p class="thank-you-sub">We appreciate your trust in AgriXen Market.</p>
+                <button class="confirm-btn" onclick="closeThankYouModal()">Continue</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p class="footer-credit">Made with <span class="heart">&#10084;</span> for Kenyan Farmers</p>
+            <p class="footer-tagline">Open Source &#8226; Free Forever &#8226; No Account Needed</p>
+            <p class="footer-brand">AgriXen &#8226; AI Smart Farming</p>
+            <a href="https://www.mortappsstudios.com" target="_blank" class="footer-powered">Powered By MortApps Studios</a>
+            
+            <!-- Footer Buttons: Contact, Help, Install -->
+            <div class="footer-buttons">
+                <button id="footerContact" class="footer-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    Contact
+                </button>
+                <button id="footerHelp" class="footer-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Help
+                </button>
+                <button id="footerInstall" class="footer-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Install
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Barn-E AI Response Engine (load BEFORE app.js) -->
+    <script src="barn-e.js"></script>
+    
+    <!-- Main Application -->
+    <script src="app.js"></script>
+    
+    <!-- Service Worker Registration for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('SW registered:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', function() {
+                            var newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available - auto update
+                                    console.log('New version available! Updating...');
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+            
+            // Handle service worker messages
+            navigator.serviceWorker.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'SW_UPDATED') {
+                    console.log('App updated to version:', event.data.version);
+                    // Auto reload on update
+                    window.location.reload();
+                }
+            });
+            
+            // Handle controller change (new SW activated)
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                console.log('New service worker activated, reloading...');
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>

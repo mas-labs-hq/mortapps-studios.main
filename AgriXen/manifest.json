@@ -1,0 +1,84 @@
+{
+    "name": "AgriXen - Smart Farming Assistant",
+    "short_name": "AgriXen",
+    "description": "Smart farming assistant for Kenyan farmers. Crop recommendations, weather forecasts, and AI livestock health advice. Free forever, no account needed.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#F0FDF4",
+    "theme_color": "#10B981",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["agriculture", "productivity", "utilities"],
+    "shortcuts": [
+        {
+            "name": "Crops",
+            "short_name": "Crops",
+            "description": "View crop recommendations",
+            "url": "./index.html?tab=crops",
+            "icons": [{ "src": "icons/android-chrome-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Barn-E AI",
+            "short_name": "AI Chat",
+            "description": "Chat with Barn-E AI assistant",
+            "url": "./index.html?tab=barn-e",
+            "icons": [{ "src": "icons/android-chrome-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Market",
+            "short_name": "Market",
+            "description": "Buy and sell produce",
+            "url": "./index.html?tab=market",
+            "icons": [{ "src": "icons/android-chrome-192x192.png", "sizes": "192x192" }]
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "wide-screenshot.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "AgriXen Home Screen"
+        }
+    ],
+    "share_target": {
+        "action": "./index.html",
+        "method": "GET",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    }
+}
