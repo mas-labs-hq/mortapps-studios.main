@@ -225,17 +225,22 @@ var PRODUCE_CATALOG = [
 
 // =====================================================
 // =====================================================
-// SMART PRICING ENGINE
+// SMART PRICING ENGINE — RANGE SYSTEM
 // =====================================================
 // =====================================================
 //
 // HOW IT WORKS:
 // This engine auto-adjusts produce prices daily based on
-// real Kenyan market patterns. When ON, prices change
-// once per day (not on every page refresh).
+// real Kenyan market patterns. When ON, prices display as
+// a RANGE (e.g. "KES 110 – 150") reflecting the typical
+// market spread across sellers, quality grades & bargaining.
+// Prices change once per day (not on every page refresh).
 //
 // FORMULA:
-//   dynamic_price = base_price × seasonal_factor × daily_variation
+//   midpoint = base_price × seasonal_factor × daily_variation
+//   spread  = volatility_dailyRange × 0.6 (min 4%)
+//   low     = midpoint × (1 - spread)
+//   high    = midpoint × (1 + spread)
 //
 // SEASONAL CYCLE (Kenya's agricultural calendar):
 //   Jan-Feb   → HIGH PRICES (lean season, low supply)
@@ -244,12 +249,15 @@ var PRODUCE_CATALOG = [
 //   Sep-Oct   → SPIKING (dry season, scarcity builds)
 //   Nov-Dec   → STABILIZING (short rains, second crop)
 //
-// PRODUCT VOLATILITY:
-//   Vegetables (especially tomatoes, capsicum) → HIGH swings
-//   Fruits (mangoes, watermelon) → MEDIUM-HIGH swings
-//   Grains & cereals → LOW swings (stored, less perishable)
-//   Tubers & roots → MEDIUM swings
-//   Animal produce → LOW swings (stable demand year-round)
+// RANGE WIDTH BY VOLATILITY:
+//   Vegetables (tomatoes, capsicum) → WIDE range (±9-12%)
+//   Fruits (mangoes, watermelon)    → MEDIUM-WIDE (±6-9%)
+//   Grains & cereals                → NARROW (±4%)
+//   Tubers & roots                  → MEDIUM (±4-6%)
+//   Animal produce                  → TIGHTEST (±4%)
+//
+// WHEN SMART PRICING IS OFF:
+//   Shows a single fixed price from PRODUCE_CATALOG (no range).
 //
 // =====================================================
 // ★★★  SMART PRICING - ON/OFF SWITCH  ★★★
@@ -337,7 +345,7 @@ var PRODUCT_VOLATILITY_OVERRIDES = {
 };
 
 // ---- PRICING ENGINE STATE (DO NOT EDIT) ----
-var _cachedPrices = {};       // { "Tomatoes": { price, basePrice, trend, status } }
+var _cachedPrices = {};       // { "Tomatoes": { price, priceLow, priceHigh, basePrice, trend, status } }
 var _lastCalcDate = null;    // "Mon Jun 15 2026" - recalculates when date changes
 var _smartPricingOn = false;  // Runtime state (set from SMART_PRICING variable above)
 
@@ -390,8 +398,11 @@ function _getVolatilityProfile(productName, category) {
     return { seasonWeight: 1.0, dailyRange: 0.05 }; // Fallback
 }
 
-// Calculate the dynamic price for a single product
-function _calculateDynamicPrice(item, category) {
+// Calculate the price RANGE for a single product (low – mid – high)
+// The range represents the typical market spread across different
+// sellers, quality grades, and bargaining outcomes.
+// Returns: { low, mid, high }
+function _calculatePriceRange(item, category) {
     var basePrice = item.price;
     var month = new Date().getMonth() + 1; // 1-12
 
@@ -402,32 +413,54 @@ function _calculateDynamicPrice(item, category) {
     var profile = _getVolatilityProfile(item.name, category);
 
     // 3. Apply seasonal swing with product-specific weight
-    // More volatile products = bigger swings from seasonal changes
     // Formula: adjustedSeasonal = 1 + (seasonalMultiplier - 1) × seasonWeight
-    // Examples:
-    //   Tomatoes (weight 1.4) in July (seasonal 0.80): 1 + (-0.20 × 1.4) = 0.72 → 28% drop
-    //   Maize (weight 0.50) in July (seasonal 0.80):  1 + (-0.20 × 0.5) = 0.90 → 10% drop
-    //   Eggs (weight 0.30) in July (seasonal 0.80):   1 + (-0.20 × 0.3) = 0.94 → 6% drop
     var adjustedSeasonal = 1.0 + (seasonalMultiplier - 1.0) * profile.seasonWeight;
 
     // 4. Get daily micro-variation (deterministic per product per day)
     var dailyVariation = _getDailyVariation(item.name, profile.dailyRange);
 
-    // 5. Calculate final price
-    var dynamicPrice = Math.round(basePrice * adjustedSeasonal * dailyVariation);
+    // 5. Calculate midpoint price
+    var midPrice = Math.round(basePrice * adjustedSeasonal * dailyVariation);
 
-    // 6. Clamp to reasonable range (min 70%, max 160% of base)
-    // This prevents unrealistic extremes
-    var minPrice = Math.round(basePrice * 0.70);
-    var maxPrice = Math.round(basePrice * 1.60);
-    dynamicPrice = Math.max(minPrice, Math.min(maxPrice, dynamicPrice));
+    // 6. Calculate range spread based on volatility
+    // More volatile products = wider range between low and high
+    // Minimum 4% spread ensures even stable products show a visible range
+    var rangeSpread = Math.max(profile.dailyRange * 0.6, 0.04);
 
-    // Round to nearest 5 for cleaner display (optional, for products > 100)
-    if (dynamicPrice > 100) {
-        dynamicPrice = Math.round(dynamicPrice / 5) * 5;
+    // Add deterministic jitter to the spread itself (so it's not always exactly ±X%)
+    var spreadSeed = _getDailySeed() * 7 + _productHash(item.name + '_spread');
+    var spreadJitter = 0.85 + _seededRandom(spreadSeed) * 0.30; // 0.85 to 1.15
+    rangeSpread = rangeSpread * spreadJitter;
+
+    // 7. Calculate low and high from the midpoint
+    var lowPrice = Math.round(midPrice * (1 - rangeSpread));
+    var highPrice = Math.round(midPrice * (1 + rangeSpread));
+
+    // 8. Clamp to the same bounds (70%–160% of base)
+    var minBound = Math.round(basePrice * 0.70);
+    var maxBound = Math.round(basePrice * 1.60);
+    lowPrice = Math.max(minBound, lowPrice);
+    highPrice = Math.min(maxBound, highPrice);
+
+    // 9. Round for clean display: prices > 100 round to nearest 5
+    if (lowPrice > 100) lowPrice = Math.round(lowPrice / 5) * 5;
+    if (highPrice > 100) highPrice = Math.round(highPrice / 5) * 5;
+    if (midPrice > 100) midPrice = Math.round(midPrice / 5) * 5;
+
+    // 10. Ensure low <= high (rounding can flip them for tiny spreads)
+    if (lowPrice > highPrice) {
+        var swap = lowPrice;
+        lowPrice = highPrice;
+        highPrice = swap;
     }
 
-    return dynamicPrice;
+    // 11. If low == high (rare for cheap items), widen slightly
+    if (lowPrice === highPrice && basePrice > 20) {
+        lowPrice = Math.max(Math.round(basePrice * 0.92), lowPrice - 5);
+        highPrice = Math.min(Math.round(basePrice * 1.08), highPrice + 5);
+    }
+
+    return { low: lowPrice, mid: midPrice, high: highPrice };
 }
 
 // Determine the price trend compared to base price
@@ -452,7 +485,7 @@ function _getMarketStatus(basePrice, dynamicPrice) {
     return { label: "Normal", type: "normal", icon: "🟡" };
 }
 
-// Calculate ALL dynamic prices at once (called once per day)
+// Calculate ALL dynamic price RANGES at once (called once per day)
 function _calculateAllDynamicPrices() {
     _cachedPrices = {};
     var today = new Date().toDateString();
@@ -462,12 +495,14 @@ function _calculateAllDynamicPrices() {
         var cat = PRODUCE_CATALOG[i];
         for (var j = 0; j < cat.items.length; j++) {
             var item = cat.items[j];
-            var dynamicPrice = _calculateDynamicPrice(item, cat.category);
-            var trend = _getPriceTrend(item.price, dynamicPrice);
-            var status = _getMarketStatus(item.price, dynamicPrice);
+            var range = _calculatePriceRange(item, cat.category);
+            var trend = _getPriceTrend(item.price, range.mid);
+            var status = _getMarketStatus(item.price, range.mid);
 
             _cachedPrices[item.name] = {
-                price: dynamicPrice,
+                price: range.mid,
+                priceLow: range.low,
+                priceHigh: range.high,
                 basePrice: item.price,
                 trend: trend,
                 status: status
@@ -475,10 +510,12 @@ function _calculateAllDynamicPrices() {
         }
     }
 
-    console.log('[Smart Pricing] Calculated ' + Object.keys(_cachedPrices).length + ' prices for ' + today);
+    console.log('[Smart Pricing] Calculated ' + Object.keys(_cachedPrices).length + ' price ranges for ' + today);
 }
 
-// Get the display price for a product (dynamic or base)
+// Get the display price (or range) for a product
+// When Smart Pricing ON: returns { price, priceLow, priceHigh, trend, status }
+// When OFF: returns { price, trend: null, status: null }
 function getDisplayPrice(item) {
     if (!_smartPricingOn) return { price: item.price, trend: null, status: null };
     if (_cachedPrices[item.name]) return _cachedPrices[item.name];
@@ -550,7 +587,9 @@ function injectPricingStyles() {
         '.dot-normal{background:#F59E0B;box-shadow:0 0 4px rgba(245,158,11,0.4);}' +
         '.dot-good{background:#10B981;box-shadow:0 0 4px rgba(16,185,129,0.4);}' +
         /* Modified price tag when pricing is active */
-        '.product-price-tag.sp-pricing-active{gap:0.15rem;align-items:flex-end;}';
+        '.product-price-tag.sp-pricing-active{gap:0.15rem;align-items:flex-end;}' +
+        /* Price range dash separator styling */
+        '.product-price-amount{white-space:nowrap;}';
 
     document.head.appendChild(style);
 }
@@ -844,7 +883,12 @@ function renderProduce() {
         }
         // Price overlay on image (with trend indicator when pricing is active)
         html += '<div class="product-price-tag' + (isSmartPricingOn() ? ' sp-pricing-active' : '') + '">';
-        html += '<span class="product-price-amount">KES ' + displayPrice.toLocaleString() + '</span>';
+        // PRICE RANGE: Show "KES 110 – 150" when smart pricing is ON
+        if (isSmartPricingOn() && pricing.priceLow !== undefined && pricing.priceLow !== pricing.priceHigh) {
+            html += '<span class="product-price-amount">KES ' + pricing.priceLow.toLocaleString() + ' – ' + pricing.priceHigh.toLocaleString() + '</span>';
+        } else {
+            html += '<span class="product-price-amount">KES ' + displayPrice.toLocaleString() + '</span>';
+        }
         html += '<span class="product-price-unit">' + item.unit + '</span>';
         // SMART PRICING: Show trend arrow when engine is on
         if (isSmartPricingOn() && pricing.trend) {
@@ -919,14 +963,20 @@ function openModal(index, action) {
     // Title
     title.textContent = (action === 'buy' ? 'Buy ' : 'Sell ') + item.name;
 
-    // SMART PRICING: Show dynamic price in modal
+    // SMART PRICING: Show price range in modal
     var pricing = getDisplayPrice(item);
     var displayPrice = pricing.price;
-    if (isSmartPricingOn() && pricing.trend) {
-        price.textContent = 'Market: KES ' + displayPrice.toLocaleString() + ' / ' + item.unit + '  ' + pricing.trend.arrow + ' ' + pricing.status.label;
+    var priceStr = 'Market: ';
+    if (isSmartPricingOn() && pricing.priceLow !== undefined && pricing.priceLow !== pricing.priceHigh) {
+        priceStr += 'KES ' + pricing.priceLow.toLocaleString() + ' – ' + pricing.priceHigh.toLocaleString();
     } else {
-        price.textContent = 'Market: KES ' + displayPrice.toLocaleString() + ' / ' + item.unit;
+        priceStr += 'KES ' + displayPrice.toLocaleString();
     }
+    priceStr += ' / ' + item.unit;
+    if (isSmartPricingOn() && pricing.trend) {
+        priceStr += '  ' + pricing.trend.arrow + ' ' + pricing.status.label;
+    }
+    price.textContent = priceStr;
 
     // Thumbnail - handle image vs placeholder
     var thumbParent = document.querySelector('.modal-header-left');
@@ -1003,7 +1053,12 @@ function sendToWhatsApp(event) {
     if (currentAction === 'buy') {
         message = '🛒 *AGRIXEN MARKETS - BUY REQUEST*\n\n';
         message += '📦 *Product:* ' + currentProduct.name + '\n';
-        message += '📊 *Market Price:* KES ' + marketPrice.toLocaleString() + ' / ' + currentProduct.unit + '\n';
+        // Show price range in WhatsApp message
+        if (isSmartPricingOn() && pricing.priceLow !== undefined && pricing.priceLow !== pricing.priceHigh) {
+            message += '📊 *Market Range:* KES ' + pricing.priceLow.toLocaleString() + ' – ' + pricing.priceHigh.toLocaleString() + ' / ' + currentProduct.unit + '\n';
+        } else {
+            message += '📊 *Market Price:* KES ' + marketPrice.toLocaleString() + ' / ' + currentProduct.unit + '\n';
+        }
         message += '🔢 *Quantity Needed:* ' + quantity + '\n';
         message += '👤 *Name:* ' + name + '\n';
         message += '📍 *Location:* ' + location + '\n\n';
