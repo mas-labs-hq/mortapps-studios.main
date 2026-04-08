@@ -20,7 +20,7 @@
 // ============================================
 // CHANGE THIS VERSION WHEN YOU UPDATE THE APP
 // ============================================
-var CACHE_VERSION = '3.16.0';
+var CACHE_VERSION = '3.17.0';
 var CACHE_NAME = 'agrixen-v' + CACHE_VERSION;
 
 // Files to cache for offline use
