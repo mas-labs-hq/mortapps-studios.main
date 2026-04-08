@@ -55,6 +55,18 @@ var COMMUNITY_MESSAGES = [
         text: "Jambo! Karibu AgriXen Community. We're here to support your farming journey with crop tips, livestock advice, and market updates. Stay connected by joining our community above\u2014click 'Join Us' to receive exclusive farming insights and seasonal alerts!",
         time: "Today"
     },
+
+    { 
+        name: "AgriXen Team",
+        text: "Farmers, market day is loading... how's the prep going? Anyone heading out to supply tomorrow? Whatever you're harvesting, sorting, or packing tonight — that's the real work most people never see. Tomorrow's another one. Rest well, you've earned it.",
+        image: "com-images/harvest.jpg",
+        time: "7:58 PM"
+    },
+
+
+
+
+
     // ADD MORE MESSAGES BELOW - Examples:
     // { name: "AgriXen Team", text: "\u26a0\ufe0f Watch out for Fall Armyworm this season!", image: "com-images/armyworm.jpg", time: "Yesterday" },
     // { name: "AgriXen Team", text: "This is what maize lethal necrosis looks like on your crops.", image: "com-images/mln.jpg", time: "2 days ago" },
