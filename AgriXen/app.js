@@ -58,8 +58,8 @@ var COMMUNITY_MESSAGES = [
 
     { 
         name: "AgriXen Team",
-        text: "Farmers, market day is loading... how's the prep going? Anyone heading out to supply tomorrow? Whatever you're harvesting, sorting, or packing tonight — that's the real work most people never see. Tomorrow's another one. Rest well, you've earned it.",
-        image: "com-images/harvest.jpg",
+        text: "Farmers, market day is loading... how's the prep going? Anyone heading out to supply tomorrow? Whatever you're harvesting, sorting, or packing tonight- that's the real work most people never see. Tomorrow's another one. Rest well, you've earned it.",
+        image: "com-images/harvest.png",
         time: "7:58 PM"
     },
 
