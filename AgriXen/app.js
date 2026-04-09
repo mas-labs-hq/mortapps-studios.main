@@ -60,7 +60,13 @@ var COMMUNITY_MESSAGES = [
         name: "AgriXen Team",
         text: "Farmers, market day is loading... how's the prep going? Anyone heading out to supply tomorrow? Whatever you're harvesting, sorting, or packing tonight- that's the real work most people never see. Tomorrow's another one. Rest well, you've earned it.",
         image: "./com-images/harvest.png",
-        time: "7:58 PM"
+        time: "7:58 PM-Wednesday"
+    },
+
+    { 
+        name: "AgriXen Team",
+        text: "Quick one: If you've got fresh produce looking good right now, send us the photos. We feature farmer produce right here on the community board so buyers across the platform can see what's available and where. Doesn't have to be studio quality. A clear phone photo of your harvest, your stall, or even your shamba is enough. Send it through and we'll put it up.",
+        time: "10:54 AM-Thursday"
     },
 
 
