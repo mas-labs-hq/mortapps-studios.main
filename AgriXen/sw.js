@@ -1,6 +1,6 @@
 /**
  * AgriXen Service Worker
- * Version: 4.20.0 - WhatsApp ticks, Farmers Online fixes, Welcome Back notifications
+ * Version: 4.21.0 - WhatsApp ticks, Farmers Online fixes, Welcome Back notifications
  * 
  * HOW UPDATES WORK:
  * 1. Change CACHE_VERSION below when you update any file
@@ -20,7 +20,7 @@
 // ============================================
 // CHANGE THIS VERSION WHEN YOU UPDATE THE APP
 // ============================================
-var CACHE_VERSION = '4.20.0';
+var CACHE_VERSION = '4.21.0';
 var CACHE_NAME = 'agrixen-v' + CACHE_VERSION;
 
 // Files to cache for offline use
