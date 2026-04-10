@@ -126,31 +126,31 @@ var visibleActivityCount = 0; // How many activities currently visible
 // =====================================================
 var FARMERS_OF_THE_WEEK = [
     { 
-        name: "Jane Wangari", 
-        profilePic: "farmers-pic/jane.wangari.jpg", 
-        story: "Growing sukuma wiki and beans in Kajiado for 4 years. This week she harvested 160kg of fresh produce!",
-        harvest1: "harvest-pic/jane-spinach.jpg",
+        name: "Patrick Muriithi", 
+        profilePic: "https://images.pexels.com/photos/30534343/pexels-photo-30534343.jpeg", 
+        story: "Grows spinach and bananas on a small plot in Kiambu. Started with just a few banana trees behind his house and now supplies both to the local market every week. This week he moved 160kg of fresh produce, his best week yet.",
+        harvest1: "https://www.farmworx.co.ke/wp-content/uploads/2023/12/spinach-1834479_1280-1024x768.jpg",
         harvest1Name: "spinach",
-        harvest2: "harvest-pic/jane-beans.jpg",
-        harvest2Name: "Beans"
+        harvest2: "https://ik.imagekit.io/zani/green-banana_KdhxcFtEp.jpg",
+        harvest2Name: "Banana"
     },
     { 
-        name: "Mary Wanjiku", 
-        profilePic: "https://images.pexels.com/photos/27205295/pexels-photo-27205295.jpeg", 
-        story: "Third-generation tea farmer from Nyeri with 15 acres under cultivation. Her farm produces some of the finest purple leaf tea in the region!",
-        harvest1: "https://images.pexels.com/photos/6136356/pexels-photo-6136356.jpeg",
-        harvest1Name: "Tea",
-        harvest2: "https://images.pexels.com/photos/6870859/pexels-photo-6870859.jpeg",
-        harvest2Name: "Tea"
+        name: "Rose Wairimu", 
+        profilePic: "https://images.pexels.com/photos/30092677/pexels-photo-30092677.jpeg", 
+        story: "Runs a mixed plot in Kajiado where she grows dhania and avocados among other things. She got into farming after her neighbour challenged her to use her idle land. Two seasons later, she's the one supplying that same neighbour.",
+        harvest1: "https://cdn.tuko.co.ke/images/1200x675/8a286f615cead63c.jpeg?v=1",
+        harvest1Name: "Dhania",
+        harvest2: "https://www.radiobaraza.org/wp-content/uploads/2025/09/Avocado-fruits.jpg",
+        harvest2Name: "Avocado"
     },
     { 
-        name: "Peter Ochieng", 
-        profilePic: "https://images.pexels.com/photos/11053957/pexels-photo-11053957.jpeg", 
-        story: "Specializes in drought-resistant sorghum in Homa Bay. Recently expanded to 10 acres with help from his three brothers!",
-        harvest1: "https://images.pexels.com/photos/17164919/pexels-photo-17164919.jpeg",
-        harvest1Name: "Sorghum",
-        harvest2: "https://images.pexels.com/photos/4430323/pexels-photo-4430323.jpeg",
-        harvest2Name: "Goat Herding"
+        name: "Tyson Okindo", 
+        profilePic: "https://images.pexels.com/photos/33993456/pexels-photo-33993456.jpeg", 
+        story: "Farms sweet potatoes and maize in Kisii with his family. They started on half an acre after their father retired from the same land. Now they're on 10 acres and still figuring out how to keep up with demand from the local market.",
+        harvest1: "https://kenaff.org/admin/dist/programs/figure-1%20(1).png",
+        harvest1Name: "Sweet Potatoes",
+        harvest2: "https://www.infonet-biovision.org/sites/default/files/styles/full_image_popup/public/2024-07/Maize%20%28Zea%20mays%29%20in%20Jalo%20Village%2C%20NW%20Ethiopia.%20%C2%A9%20Maundu%2C%202014.jpg?itok=mfr6_dsn",
+        harvest2Name: "Maize"
     }
 ];
 
