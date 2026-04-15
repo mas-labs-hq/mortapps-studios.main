@@ -15,7 +15,8 @@ var SLOT_ADS = [
     { image: 'ad-images/manji-ad-slot.png', url: 'https://manji.co.ke', alt: 'Manji Biscuits', duration: '10s' },
     { image: 'ad-images/arm-ad-slot.png', url: 'https://www.arimis-milkingjelly.com', alt: 'arimis', duration: '5s' },
     { image: 'ad-images/mas-ad-slot.png', url: 'https://www.mortappsstudios.com', alt: 'MortApps Studios', duration: '10s' },
-    { image: 'ad-images/pep-ad-slot.png', url: 'https://www.pepsodent.com/gh/home.html', alt: 'Pepsodent', duration: '5s' }
+    { image: 'ad-images/pep-ad-slot.png', url: 'https://www.pepsodent.com/gh/home.html', alt: 'Pepsodent', duration: '5s' },
+    { image: 'ad-images/arbrg.jpeg', url: 'https://wa.me/254752722328', alt: 'Arbirage', duration: '5s' }
 ];
 
 // Ad rotation state - independent for each slot with no-repeat logic
