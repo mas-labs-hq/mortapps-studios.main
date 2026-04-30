@@ -266,27 +266,74 @@ var HERBAL_PRODUCTS = {
     getProductsForCondition: function(conditionName, conditionKeywords, category) {
         var matches = [];
         var conditionLower = (conditionName || '').toLowerCase();
+        var conditionWords = conditionLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(function(w) { return w.length > 1; });
         var keywords = (conditionKeywords || []).map(function(k) { return k.toLowerCase(); });
 
         this.brands.forEach(function(brand) {
             brand.products.forEach(function(product) {
                 var score = 0;
 
+                // EXACT phrase match on treats (no loose substring matching)
                 product.treats.forEach(function(treats) {
-                    if (conditionLower.includes(treats.toLowerCase()) || treats.toLowerCase().includes(conditionLower)) {
+                    var treatWords = treats.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/);
+                    // Check if condition name words appear as whole words in treats
+                    var matchCount = 0;
+                    conditionWords.forEach(function(cw) {
+                        treatWords.forEach(function(tw) {
+                            if (cw === tw) matchCount++;
+                        });
+                    });
+                    // Check if condition name is a substring of treats (intentional — e.g. "stomach upset" in "stomach upset relief")
+                    // But check reverse with word boundaries (prevents "burns" matching inside "burning urination")
+                    if (conditionLower === treats.toLowerCase()) {
                         score += 10;
+                    } else if (treats.toLowerCase().indexOf(conditionLower) !== -1) {
+                        score += 10;
+                    } else {
+                        var escapedCN = conditionLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        var cnWordRegex = new RegExp('\\b' + escapedCN + '\\b', 'i');
+                        if (cnWordRegex.test(treats.toLowerCase())) {
+                            score += 10;
+                        }
+                    }
+                    if (score === 0 && matchCount > 0 && matchCount >= conditionWords.length * 0.5) {
+                        score += 7;
                     }
                 });
 
+                // KEYWORD matching (tightened — exact or whole-word boundary only)
                 if (keywords && keywords.length > 0) {
                     product.treatsKeywords.forEach(function(pKeyword) {
                         var pk = pKeyword.toLowerCase();
                         keywords.forEach(function(kw) {
-                            if (kw === pk || kw.includes(pk) || pk.includes(kw)) {
+                            // Exact match
+                            if (kw === pk) {
                                 score += 5;
+                            } else {
+                                // Whole-word check: split both and verify all words match
+                                var kwWords = kw.split(/\s+/);
+                                var pkWords = pk.split(/\s+/);
+                                if (kwWords.length > 1 || pkWords.length > 1) {
+                                    // Multi-word: check overlap of individual words
+                                    var overlap = 0;
+                                    kwWords.forEach(function(kwWord) {
+                                        pkWords.forEach(function(pkWord) {
+                                            if (kwWord === pkWord) overlap++;
+                                        });
+                                    });
+                                    if (overlap > 0 && overlap >= Math.max(kwWords.length, pkWords.length) * 0.5) {
+                                        score += 3;
+                                    }
+                                }
+                                // NO substring matching — this prevents "burn" matching "heartburn"
                             }
                         });
                     });
+                }
+
+                // Dr. Spice priority boost (small bonus to ensure Dr. Spice surfaces higher)
+                if (brand.name.toLowerCase().indexOf('dr') !== -1 && brand.name.toLowerCase().indexOf('spice') !== -1) {
+                    score += 2;
                 }
 
                 if (score > 0) {
