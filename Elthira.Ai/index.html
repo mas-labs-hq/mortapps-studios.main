@@ -65,8 +65,8 @@
             touch-action: manipulation;
         }
 
-        /* GPU layer promotion for smooth mobile scrolling & typing */
-        .step, .form-card, .results-card, .hero-card {
+        /* GPU layer promotion for smooth mobile scrolling */
+        .step {
             will-change: transform, opacity;
             -webkit-transform: translateZ(0);
             transform: translateZ(0);
@@ -2529,6 +2529,66 @@
         }, 1000);
     }
 
+    // =====================================================
+    // ABBREVIATION EXPANSION DICTIONARY
+    // =====================================================
+    var ABBREVIATIONS = {
+        // === BLOOD PRESSURE (maps to keywords in f6.js HBP condition) ===
+        'bp': 'blood pressure',
+        'hbp': 'high blood pressure',
+        'htn': 'hypertension',
+
+        // === DIABETES (maps to keywords in f6.js Diabetes condition) ===
+        'dm': 'diabetes',
+        'dm2': 'type 2 diabetes',
+        't2dm': 'type 2 diabetes',
+
+        // === ARTHRITIS (maps to keywords in f4.js Joint Pain condition) ===
+        'ra': 'rheumatoid arthritis',
+        'oa': 'osteoarthritis',
+
+        // === URINARY (maps to keywords in f6.js UTI condition) ===
+        'uti': 'urinary tract infection',
+
+        // === DIGESTIVE (maps to keywords in f1.js Acid Reflux condition) ===
+        'gerd': 'acid reflux',
+
+        // === COMMON SHORTHAND (enables keyword matching for casual terms) ===
+        'sugar': 'blood sugar',
+        'sugar levels': 'blood sugar levels'
+    };
+
+    /**
+     * Expands abbreviations in user text before matching.
+     * e.g. "I have BP issues" -> "I have blood pressure issues"
+     * Also handles compound terms like "bp high" -> "high blood pressure"
+     */
+    function expandAbbreviations(text) {
+        var lower = text.toLowerCase();
+        // Process longest keys first so multi-word abbreviations take priority
+        var sortedKeys = Object.keys(ABBREVIATIONS).sort(function(a, b) { return b.length - a.length; });
+        sortedKeys.forEach(function(abbr) {
+            var expanded = ABBREVIATIONS[abbr].toLowerCase();
+            // Match whole-word only (bounded by space, hyphen, start, or end of string)
+            // This ensures "anti-GERD" or "non-UTI" also get expanded correctly
+            var escaped = abbr.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+            var regex = new RegExp('(?:^|[\\s\\-])(' + escaped + ')(?=[\\s\\-]|$)', 'gi');
+            lower = lower.replace(regex, function(match, abbrMatch) {
+                // Don't expand if the preceding word(s) already form the expansion
+                // e.g. prevent "stomach ulcer" -> "stomach stomach ulcer"
+                var preMatch = match.substring(0, match.length - abbrMatch.length);
+                var lastPreWord = preMatch.trim().split(/\s+/).pop() || '';
+                var expansionFirstWord = expanded.split(/\s+/)[0];
+                if (lastPreWord && expansionFirstWord && expansionFirstWord.indexOf(lastPreWord) === 0) {
+                    return match; // Skip — already part of expanded form
+                }
+                return (preMatch || '') + expanded + ' ';
+            });
+        });
+        // Clean up extra spaces
+        return lower.replace(/\s+/g, ' ').trim();
+    }
+
     function analyzeSymptoms() {
         var allData = [];
 
@@ -2542,9 +2602,16 @@
         var symptomText = (userData.symptoms || '').toLowerCase();
         var lifestyleText = (userData.lifestyle || '').toLowerCase();
         var tagText = (userData.selectedTags || []).join(' ').toLowerCase();
+
+        // EXPAND ABBREVIATIONS before anything else
+        symptomText = expandAbbreviations(symptomText);
+        lifestyleText = expandAbbreviations(lifestyleText);
+        tagText = expandAbbreviations(tagText);
+
         var combinedText = symptomText + ' ' + lifestyleText + ' ' + tagText;
 
-        var userTokens = tokenize(combinedText);
+        // Tokenize into multi-word phrases (2-grams and 3-grams) AND single words
+        var userTokens = tokenizeWithPhrases(combinedText);
 
         var matches = [];
 
@@ -2557,12 +2624,7 @@
                 if (condition.keywords) {
                     condition.keywords.forEach(function(keyword) {
                         var kw = keyword.toLowerCase();
-                        var found = userTokens.some(function(token) {
-                            return token === kw ||
-                                   token.includes(kw) ||
-                                   kw.includes(token) ||
-                                   levenshtein(token, kw) <= 2;
-                        });
+                        var found = smartMatch(kw, userTokens);
                         if (found) {
                             score += 10;
                             matchDetails.push(keyword);
@@ -2573,9 +2635,7 @@
                 if (condition.relatedKeywords) {
                     condition.relatedKeywords.forEach(function(keyword) {
                         var kw = keyword.toLowerCase();
-                        var found = userTokens.some(function(token) {
-                            return token.includes(kw) || kw.includes(token);
-                        });
+                        var found = smartMatch(kw, userTokens);
                         if (found) {
                             score += 5;
                         }
@@ -2585,8 +2645,10 @@
                 if (condition.lifestyleFactors) {
                     condition.lifestyleFactors.forEach(function(factor) {
                         var f = factor.toLowerCase();
-                        var found = lifestyleText.includes(f) || tagText.includes(f);
-                        if (found) {
+                        // Use word-boundary matching (prevents "distress" matching "stress")
+                        var escaped = f.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+                        var regex = new RegExp('\\b' + escaped + '\\b', 'i');
+                        if (regex.test(lifestyleText) || regex.test(tagText)) {
                             score += 3;
                         }
                     });
@@ -2642,15 +2704,96 @@
         return matches.slice(0, CONFIG.maxResults);
     }
 
+    /**
+     * Tokenizes text into single words AND multi-word phrases (bigrams, trigrams).
+     * This ensures "heartburn" is kept as one token, not split into "heart" + "burn".
+     * Also preserves compound keywords like "stomach pain", "acid reflux", "chest burning".
+     */
     function tokenize(text) {
         return text.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(function(t) {
             return t.length > 2;
         });
     }
 
+    function tokenizeWithPhrases(text) {
+        var words = text.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(function(t) {
+            return t.length > 1;
+        });
+
+        var tokens = [];
+        // Add single words
+        tokens = tokens.concat(words);
+        // Add bigrams (2-word phrases)
+        for (var i = 0; i < words.length - 1; i++) {
+            tokens.push(words[i] + ' ' + words[i + 1]);
+        }
+        // Add trigrams (3-word phrases)
+        for (var i = 0; i < words.length - 2; i++) {
+            tokens.push(words[i] + ' ' + words[i + 1] + ' ' + words[i + 2]);
+        }
+        return tokens;
+    }
+
+    /**
+     * Smart matching that avoids the "heartburn" -> "burns" problem.
+     *
+     * OLD LOGIC (BROKEN):
+     *   token.includes(kw) || kw.includes(token) || levenshtein <= 2
+     *   This meant "heartburn" included "burn" substring, matching burn-wound keywords.
+     *
+     * NEW LOGIC:
+     *   1. EXACT match (highest priority)
+     *   2. WHOLE-WORD BOUNDARY match — keyword must appear as a complete word/phrase
+     *      in the combined text (not as a substring of a longer word)
+     *   3. Tightened Levenshtein (max 1, only for single words >= 5 chars)
+     */
+    function smartMatch(keyword, userTokens) {
+        // 1. Exact match
+        for (var i = 0; i < userTokens.length; i++) {
+            if (userTokens[i] === keyword) return true;
+        }
+
+        // 2. Whole-word boundary match (prevents "burn" matching inside "heartburn")
+        //    Check if the keyword appears as a complete token (phrase match)
+        var kwWords = keyword.split(/\s+/);
+        var tokenWords;
+        for (var i = 0; i < userTokens.length; i++) {
+            tokenWords = userTokens[i].split(/\s+/);
+            // For single-word keywords: exact match only (already handled above)
+            // For multi-word keywords: check if ALL words of the keyword appear in the token
+            if (kwWords.length > 1 && tokenWords.length > 1) {
+                var allFound = true;
+                for (var k = 0; k < kwWords.length; k++) {
+                    if (userTokens.indexOf(kwWords[k]) === -1 && 
+                        userTokens[i].indexOf(kwWords[k]) === -1) {
+                        allFound = false;
+                        break;
+                    }
+                }
+                if (allFound) return true;
+            }
+        }
+
+        // 3. Tightened Levenshtein — only for single-word tokens >= 5 chars, max distance 1
+        //    This prevents "burn" (4 chars) from fuzzy-matching "burns" (5 chars)
+        if (kwWords.length === 1 && keyword.length >= 5) {
+            for (var i = 0; i < userTokens.length; i++) {
+                var token = userTokens[i];
+                // Only compare single-word tokens (skip bigrams/trigrams)
+                if (token.indexOf(' ') === -1 && token.length >= 5 && Math.abs(token.length - keyword.length) <= 1) {
+                    if (levenshtein(token, keyword) <= 1) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     function levenshtein(a, b) {
         if (a.length === 0) return b.length;
         if (b.length === 0) return a.length;
+        // Quick check: if length difference > threshold, skip computation
+        if (Math.abs(a.length - b.length) > 2) return 999;
         var matrix = [];
         for (var i = 0; i <= b.length; i++) { matrix[i] = [i]; }
         for (var j = 0; j <= a.length; j++) { matrix[0][j] = j; }
@@ -2706,12 +2849,14 @@
                 });
                 herbMap[key].totalScore += result.score;
 
-                // Merge cautions if this herb has additional ones
-                if (remedy.cautions && !herbMap[key].cautions.includes(remedy.cautions)) {
-                    if (herbMap[key].cautions) {
-                        herbMap[key].cautions += ' ' + remedy.cautions;
-                    } else {
+                // Merge cautions — deduplicate by checking first 40 chars to avoid repeated text
+                if (remedy.cautions) {
+                    var existingCautions = herbMap[key].cautions;
+                    var newPrefix = remedy.cautions.substring(0, 40).toLowerCase();
+                    if (!existingCautions) {
                         herbMap[key].cautions = remedy.cautions;
+                    } else if (existingCautions.toLowerCase().indexOf(newPrefix) === -1) {
+                        herbMap[key].cautions = existingCautions + ' | ' + remedy.cautions;
                     }
                 }
             });
@@ -2794,7 +2939,39 @@
             maxProds = 1;
         }
 
-        return productArray.slice(0, maxProds);
+        // BRAND DIVERSITY: Ensure Dr. Spice is prioritized but other brands are included
+        var selected = [];
+        var drSpiceCount = 0;
+        var otherCount = 0;
+        var maxDrSpice = Math.ceil(maxProds * 0.6); // e.g. 2 out of 3
+
+        for (var i = 0; i < productArray.length && selected.length < maxProds; i++) {
+            var prod = productArray[i];
+            var isDrSpice = prod.brand.toLowerCase().indexOf('dr. spice') !== -1 ||
+                            prod.brand.toLowerCase().indexOf('dr spice') !== -1 ||
+                            prod.brand.toLowerCase().indexOf('drspice') !== -1;
+
+            if (isDrSpice) {
+                if (drSpiceCount < maxDrSpice) {
+                    selected.push(prod);
+                    drSpiceCount++;
+                }
+            } else {
+                selected.push(prod);
+                otherCount++;
+            }
+        }
+
+        // If we only have Dr. Spice products, fill remaining slots with best Dr. Spice
+        if (selected.length < maxProds) {
+            for (var i = 0; i < productArray.length && selected.length < maxProds; i++) {
+                if (selected.indexOf(productArray[i]) === -1) {
+                    selected.push(productArray[i]);
+                }
+            }
+        }
+
+        return selected;
     }
 
     // =====================================================
@@ -2858,7 +3035,7 @@
         // ---- CONSOLIDATED HERBAL PLAN (top 2-3 herbs for ALL issues) ----
         if (topHerbs.length > 0) {
             html += '<div class="consolidated-plan animate-in" style="animation-delay:' + (analysisResults.length * 0.1 + 0.15) + 's">';
-            html += '<h3 class="consolidated-plan-title"><i class="ph ph-herb"></i> Your Personalized Herbal Plan</h3>';
+            html += '<h3 class="consolidated-plan-title"><i class="ph ph-leaf"></i> Your Personalized Herbal Plan</h3>';
             html += '<p class="consolidated-plan-subtitle">Elthira has carefully selected these ' + topHerbs.length + ' herb' + (topHerbs.length > 1 ? 's' : '') + ' that can address ' + (topHerbs.length === 1 ? 'your primary' : 'all your identified') + ' concern' + (analysisResults.length > 1 ? 's' : '') + '. Instead of overwhelming you with many options, she recommends focusing on these for the best results.</p>';
 
             topHerbs.forEach(function(herb) {
