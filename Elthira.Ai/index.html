@@ -37,6 +37,8 @@
             width: 100%;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
 
         body {
@@ -61,6 +63,16 @@
 
         * {
             touch-action: manipulation;
+        }
+
+        /* GPU layer promotion for smooth mobile scrolling & typing */
+        .step, .form-card, .results-card, .hero-card {
+            will-change: transform, opacity;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+        }
+        .app-container {
+            transform: translateZ(0);
         }
 
         /* =====================================================
@@ -189,6 +201,7 @@
             top: 15%;
             left: -5%;
             animation: floatOrb1 8s ease-in-out infinite;
+            will-change: transform;
         }
 
         .hero-orb-2 {
@@ -198,6 +211,7 @@
             top: 60%;
             right: -3%;
             animation: floatOrb2 12s ease-in-out infinite;
+            will-change: transform;
         }
 
         .hero-orb-3 {
@@ -207,6 +221,7 @@
             bottom: 20%;
             left: 30%;
             animation: floatOrb3 10s ease-in-out infinite;
+            will-change: transform;
         }
 
         @keyframes floatOrb1 {
@@ -1046,6 +1061,7 @@
             pointer-events: none;
             transition: opacity 0.35s ease;
             padding: 20px;
+            box-sizing: border-box;
         }
 
         .modal-overlay.show {
@@ -1064,6 +1080,8 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
             border: 1px solid rgba(45, 106, 79, 0.1);
+            box-sizing: border-box;
+            margin: auto;
         }
 
         .modal-overlay.show .modal-box {
@@ -1101,6 +1119,7 @@
         .modal-buttons {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .modal-buttons .btn {
@@ -1108,6 +1127,9 @@
             padding: 12px 20px;
             font-size: 0.92rem;
             min-height: 44px;
+            min-width: 0;
+            box-sizing: border-box;
+            white-space: nowrap;
         }
 
         /* =====================================================
@@ -1246,12 +1268,42 @@
             }
 
             .modal-box {
-                padding: 26px 20px 22px;
+                padding: 24px 18px 20px;
+                max-width: calc(100vw - 40px);
+                border-radius: 14px;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+                gap: 8px;
             }
 
             .modal-buttons .btn {
-                padding: 12px 16px;
-                font-size: 0.88rem;
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 0.9rem;
+            }
+
+            .modal-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
+                margin-bottom: 14px;
+            }
+
+            .modal-title {
+                font-size: 1.05rem;
+            }
+
+            .modal-message {
+                font-size: 0.85rem;
+                margin-bottom: 20px;
+            }
+
+            .modal-overlay {
+                padding: 16px;
+                align-items: flex-end;
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
             }
         }
 
